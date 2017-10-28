@@ -50,7 +50,7 @@ class access:
             print "Account created!"
             return (True, "Account created!")
 
-    def login(self, username, password, customer=True):
+    def login(self, username, password, customer):
 
         '''
         Checks if Login credentials are correct. Function returns True on
@@ -72,5 +72,22 @@ class access:
 
 if __name__ == "__main__":
     a = access()
-    #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
-    a.login("bobbylee", "45673111")
+    #a.create_account("Nick", "13638292", "13638292", "2005 Hilliard Place NW")
+    #a.login("bobbylee", "44673111")
+
+    verify = 0
+    while (not verify):
+    	ID = raw_input("ID: ")
+	password = raw_input ("Password: ")
+        if (password.isdigit()):
+	    password = int(password)
+	    verify, v_msg = a.login(ID, password, True)
+          
+    keywords = []
+    
+
+
+
+
+
+
