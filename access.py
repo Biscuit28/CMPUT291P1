@@ -1,4 +1,5 @@
 import sqlite3
+from collections import default_dict
 
 
 class access:
@@ -70,7 +71,27 @@ class access:
             return (False, "username password combo is wrong")
 
 
+    def search(self, keywords):
+        '''
+        Querys items based on keywords, assumes keywords is a list
+        '''
+        products = default_dict(int)
+
+        for word in keywords:
+
+            SQL = "SELECT * FROM products WHERE name LIKE %{}%;".format(word)
+            self.cursor.execute(SQL)
+            results=self.cursor.fetchall()
+            for result in results:
+                if result[0] not in products:
+                    products[result[0]] = 1
+                else:
+                    products[result[0]] += 1
+
+        sorted(d, key=d.get, reverse=True)
+        print products
+
 if __name__ == "__main__":
     a = access()
     #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
-    a.login("bobbylee", "45673111")
+    #a.login("bobbylee", "45673111", customer=False)
