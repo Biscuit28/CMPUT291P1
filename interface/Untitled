@@ -1,0 +1,120 @@
+Lab Liveness
+
+LIVE - A register is considered LIVE if the value IN the register MAY be used
+
+        *Note that when a register is never used at all (like you don't even see it in the code),
+
+        for this lab, we consider that the moment the register is assigned, IT BECOMES DEAD
+
+        *NOTE that branch does not count as being used, but if we see a register
+        that is not in dead list, and not in live list, add it to live list
+
+DEAD - A register is considered DEAD if the value is for CERTAIN NEVER going to be used
+        -Basically, it is dead IF VALUE GETS OVERWRITTEN
+
+
+
+Consider the following example
+
+          1.  X:=3
+
+                - At this point value 3 in X is live
+
+          2.  X:=4
+
+                - At this point the value 3 in X is DEAD (Value is never going to be used)
+                - Value 4 in X could be used, so it is live
+
+          3.  Y:=X
+
+                - end of the program, we see that the value of 4 is LIVE
+
+In summary, a variable X is live at statments S if
+
+    1. there is a statment S' that USES X
+
+    2. there is actually a PATH from S to S'
+
+    3. X does NOT get overwritten
+
+
+once dead, it cannot be LIVE again UNLESS we are considering at a different branch
+
+
+*algorithm only consideres live dead AFTER GOING THROUGH THE INSTRUCTION??
+
+if there EXISTS a path for a register to be alive, it is considered ALIVE.
+
+Alternatively, this means for a register to be dead, it needs to be for all paths
+
+--------------------------------------
+
+ALGORITHM
+
+each index in visited represents the value of a register
+
+LIVE STACK - takes in registers that are live
+
+DEAD STACK - stack of words (since we use all 32 bits), in branch instruction
+              we duplicate the dead stack stack at the top BEFORE we go into the loop
+
+              this means that if we see that there is a path in which some register is not
+              dead, we can add it to our list of live without worrying
+
+VISITED - what does it contain exactly? - address-beginning address
+
+Only R and I instructions will KILL the register in source
+
+    For R type - rt, rd = live
+
+    For I type - rt = live
+
+
+    When parsing instructions with immediate format for use and definition of registers, there are several cases to consider:
+
+      branches never define a register, but they may use one or two registers depending on their type as shown in the table above.
+      ALU instructions with immediate operators (addi, andi, etc) use the rs and define the rt register.
+      Loads (lw, lh, lb, lhu, lbu) including load linked (ll) use the rs register to compute the address and define the rt register.
+      Stores (sw, sh, sb) use both the rs and the rt registers.
+      One exception is store conditional (sc). This instruction uses the rs and the rt registers, but also defines the rt register. Thus, for example, in terms of register usage, the instruction sc $t0, 0($t1) should be treated like the instruction add $t0, $t0, $t1.
+
+
+For branches
+
+    Branches provide offsets rather than target addresses, so you will need to do the conversion yourself. The following algorithm is recommended to convert branch offsets to addresses:
+
+    Extracting the lower 16 bits of a branch instruction will tell you how far away the target is. This value specifies the number of instructions between the branch and the target --- it may be negative.
+    Shift it left by two.
+    Sign extend it to 32 bits.
+    Add it to the PC+4 value.
+
+For jumps
+
+    When you detect a jump instruction you will take the value of the PC+4 and gather the 4 most-significant bits.
+
+    Gather the 26 least significant bits from the binary representatoin of the jump instruction.
+
+    Shift the 26 least significant bits of the jump instruction left by 2 so that this address will now be word aligned.
+
+    Concatenate the upper 4 significant bits that you gathered from the PC and the left-shifted 26 bits that you have gathered from the instruction.
+
+
+You can assume that the following will always be true:
+
+    1. Each function is laid out in the memory between a StartAddress and an EndAddress.
+
+    2. The first instruction of the function is at StartAddress.
+
+    3. Each function contains a single jr $ra instruction which appears at the EndAddress.
+
+    4. Every memory word between StartAddress and EndAddress is a valid MIPS instruction.
+
+    5. The input program will never contain more than 10 function calls and 10 functions. *
+
+    6. There will never be a function containing more than 100 instructions. *
+
+    7. Examples of categories of instructions that ARE INCLUDED in test cases: ALU instructions, memory access instructions, mult and div instructions, mfhi, mflo, ll, sc
+
+    8. The test cases will NOT INCLUDE pseudo instructions, floating-point instructions, trap/exception-handling instructions (such as mfc0), nops, breaks, syscalls.
+
+    9. The only control flow instructions (branches, jumps) that will be included in test cases are the ones that are listed in this lab instructions.

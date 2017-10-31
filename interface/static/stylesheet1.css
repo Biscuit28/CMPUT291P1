@@ -1,0 +1,48 @@
+body {
+  width: 100%;
+  height: 800px;
+}
+
+div.container-header{
+  width: 100%;
+  height: 30%;
+  background-color: blue;
+
+}
+
+div.container-body{
+  width: 100%;
+  height: 30%;
+}
+
+div.container-base{
+  width: 100%;
+  height: 40%;
+  background-color: blue;
+}
+
+/*button styling*/
+.button-large{
+  background-color: white;
+  border: 4px solid black;
+  color: black;
+  width: 20%;
+  margin-top: 1%;
+  display: inline-block;
+  padding: 15px 32px;
+  text-align: center;
+  font-family: STHeiti;
+  letter-spacing: 0.6px;
+  font-size: 16px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.button-large:hover, .button-small:hover {
+  background-color: black;
+  color: white;
+}
+.button-large:active, .button-small:active {
+  background-color: white;
+  color: black;
+}
