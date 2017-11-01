@@ -13,7 +13,7 @@ class access:
          self.cursor = self.conn.cursor()
 
 
-    def create_account(self, username, password, password_rpt, address):
+    def create_account(self):
 
         '''
         Checks if username exists in database.
@@ -21,7 +21,42 @@ class access:
         Args: username (str), password (str), password_rpt(Str), address(str)
         Returns: (success (boolean), message (str)) (tuple)
         '''
-        username = username.lower()
+
+
+        # Get username AND check viability
+        while (True):
+            username = raw_input("Create username: ").lower()
+            if len(username) < 4:
+                print "Username must be atleast 4 characters long"
+            else:
+                # Username is long enough
+                self.cursor.execute("SELECT * FROM customers WHERE name=:usr;",{"usr": username})
+                res=self.cursor.fetchall()
+                if len(res) == 0:
+                    # Username is available
+                    break
+                else:
+                    print "Username already exists"
+
+        # Get password AND check it
+        while (True):
+            password = raw_input("Create password: ")
+            password_rpt = raw_input("Type password again: ")
+            if (len(password) < 8):
+                print "password must be 7 characters"
+            elif (password == password_rpt):
+                break
+
+        # Get address AND check it
+        while (True):
+            address = raw_input("Home Address: ")
+            if (len(address) == 0):
+                print "address not entered"
+            else:
+                break
+
+        '''
+        #username = username.lower()
         if len(username) < 4:
             print "Username must be atleast 4 characters long"
             return (False, "Username must be atleast 4 characters long")
@@ -36,21 +71,24 @@ class access:
             return (False, "password must be 7 characters")
 
         #at this point user field seems okay, test if username exists
+        '''
+
 
         self.cursor.execute("SELECT * FROM customers WHERE name=:usr;",{"usr": username})
         res=self.cursor.fetchall()
-        if len(res) > 0:
-            print "Username already exists"
-            return (False, "account already exists")
-        else:
-            self.cursor.execute("SELECT MAX(cid) FROM customers;")
-            res=self.cursor.fetchone()
-            ID = str(int(res[0]) + 1)
-            self.cursor.execute("INSERT INTO customers (cid, name, address, pwd) VALUES (?, ?, ?, ?);",
-            (ID, username, address, password))
-            self.conn.commit()
-            print "Account created!"
-            return (True, "Account created!")
+        #if len(res) > 0:
+        #    print "Username already exists"
+        #    return (False, "account already exists")
+
+        # If program gets to here, user information should be okay (already validated)
+        self.cursor.execute("SELECT MAX(cid) FROM customers;")
+        res=self.cursor.fetchone()
+        ID = str(int(res[0][1:]) + 1)
+        self.cursor.execute("INSERT INTO customers (cid, name, address, pwd) VALUES (?, ?, ?, ?);",
+        (ID, username, address, password))
+        self.conn.commit()
+        print "Account created!"
+        return (True, "Account created!")
 
 
     def login(self, username, password, customer=True):
@@ -147,7 +185,8 @@ class access:
         LEFT OUTER JOIN ({}) f USING (pid);".format(q1, q2, q3, q4, q5, q6)
 
         self.cursor.execute(main)
-        return self.cursor.fetchall()
+        result = self.cursor.fetchall()
+        return result
 
 
     def product_details(self, product_id):
@@ -185,17 +224,27 @@ class access:
 
 
 
+        pass
+
+def uiTest():
+    a = access()
+    usr_inp = input("Type 1 to login or 0 to sign up: ")
+    while (usr_inp not in [0, 1]):
+        usr_inp = input("Type 1 to login or 0 to sign up: ")
+    if (usr_inp == 0):
+         # Creat user
+        a.create_account()
+
+
+
+
 
 if __name__ == "__main__":
-    a = access()
+    #a = access()
     #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
     #a.login("bobbylee", "45673111", customer=False)
-    r= a.search(["canned", "beef"])
-    x = a.get_products(r)
-    for i in x:
-        print i
-    x2 = a.product_details('p30')
-    for i in x2[0]:
-        print i
-    for i in x2[1]:
-        print i
+    #r= a.search(["canned", "beef"])
+    #print(r)
+    #a.get_products(r)
+    #print(a)
+    uiTest()

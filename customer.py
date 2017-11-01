@@ -39,19 +39,21 @@ class customer:
         success=True
         cart_key=product_id+'*'+str(store_id)
 
-        SQL="SELECT crr.qty FROM carries crr WHERE crr.pid='{}' AND crr.sid='{}';".format(product_id, store_id)
+        SQL="SELECT qty FROM carries"
+        print SQL
         self.cursor.execute(SQL)
         result=self.cursor.fetchone()
-        if result == None:
-            print "product {} does not exist in store {}".format(product_id, store_id)
-            return False
-        if qty >= result[0]:
-            print "quantity exceeds availability"
-            success=False
-        if cart_key in self.cart:
-            self.cart[cart_key]+=qty
-        else:
-            self.cart[cart_key]=qty
+        print result
+        # if result == None:
+        #     print "product {} does not exist in store {}".format(product_id, store_id)
+        #     return False
+        # if qty >= result[0]:
+        #     print "quantity exceeds availability"
+        #     success=False
+        # if cart_key in self.cart:
+        #     self.cart[cart_key]+=qty
+        # else:
+        #     self.cart[cart_key]=qty
         return success
 
     def delete_from_cart(self, product_id, store_id, qty, ALL=False):
@@ -89,11 +91,13 @@ class customer:
         Args: None
         Returns: success (boolean)
         '''
+
+
         pass
 
 
 if __name__ == "__main__":
     c=customer("davood")
-    c.add_to_cart("p30", 10, 100)
-    c.delete_from_cart("p30", 10, 87)
+    c.add_to_cart('p20', 20, 100)
+    #c.delete_from_cart("p10", 20, 87)
     print c.cart
