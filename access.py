@@ -89,20 +89,24 @@ class access:
         return (True, "Account created!")
 
 
-    def login(self, username, password, customer=True):
-
+    def login(self, user_typ, username, password):
         '''
         Checks if Login credentials are correct. Function returns True on
         success, returns false otherwise
         '''
-        username = username.lower()
-        if customer:
-            self.cursor.execute("SELECT * FROM customers WHERE name=:usr AND pwd=:pwd;", {"usr": username, "pwd": password})
-        else:
-            self.cursor.execute("SELECT * FROM agents WHERE name=:usr AND pwd=:pwd;", {"usr": username, "pwd": password})
+        #while (True):
+            #user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            #username = str(raw_input("Username: ").lower()).rstrip()
+            #password = str(raw_input("Password: "))
+        if user_typ == 1:
+            self.cursor.execute("SELECT * FROM customers WHERE name=? AND pwd=?", (username, password))
+        elif user_typ == 0:
+            self.cursor.execute("SELECT * FROM agents WHERE name=? AND pwd=?", (username, password))
+
         if self.cursor.fetchone() != None:
             print "Logged in!"
             return (True, "Logged in!")
+            #break
         else:
             print "username password combo is wrong"
             return (False, "username password combo is wrong")
@@ -201,9 +205,19 @@ def uiTest():
     while (usr_inp not in [0, 1]):
         usr_inp = input("Type 1 to login or 0 to sign up: ")
     if (usr_inp == 0):
-         # Creat user
+        # Create user
         a.create_account()
+        uiTest()
+    elif (usr_inp == 1):
+        # login
+        verified = False
+        while (verified == False):
+            user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            username = str(raw_input("Username: ").lower()).rstrip()
+            password = str(raw_input("Password: "))
+            verified = a.login(user_typ, username, password)[0]
 
+        #print ("user {} is verified with type {}").format(username, user_typ)
 
 
 
