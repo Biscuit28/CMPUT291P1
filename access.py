@@ -4,7 +4,7 @@ from collections import defaultdict
 
 class access:
     '''
-    module responsible for login/signup
+    module responsible for login/signup and general search
     '''
 
     def __init__(self):
@@ -16,8 +16,10 @@ class access:
     def create_account(self, username, password, password_rpt, address):
 
         '''
-        Checks if username exists in database. If it isn't, return false.
-        Function returns true on success.
+        Checks if username exists in database.
+
+        Args: username (str), password (str), password_rpt(Str), address(str)
+        Returns: (success (boolean), message (str)) (tuple)
         '''
         username = username.lower()
         if len(username) < 4:
@@ -54,8 +56,10 @@ class access:
     def login(self, username, password, customer=True):
 
         '''
-        Checks if Login credentials are correct. Function returns True on
-        success, returns false otherwise
+        Checks if Login credentials are correct.
+
+        Args: username (str), password (str), customer (varargs, boolean)
+        Returns: (success (boolean), message (str)) (tuple)
         '''
         username = username.lower()
         if customer:
@@ -71,8 +75,12 @@ class access:
 
 
     def search(self, keywords):
+
         '''
         Querys items based on keywords, assumes keywords is a list
+
+        Args: keywords (list (str))
+        Returns: sorted product_ids (list)
         '''
         products = defaultdict(int)
         for word in keywords:
@@ -88,6 +96,7 @@ class access:
 
 
     def get_products(self, products):
+
         '''
         Takes in a list of products, and finds the details according to the
         following specification:
@@ -96,6 +105,9 @@ class access:
         of stores that carry it, the number of stores that have it in stock, the
         minimum price among the stores that carry it, the minimum price among the
         stores that have the product in stock, and the number of orders within the past 7 days.
+
+        Args: products (list of pid's)
+        Returns: product info (list)
         '''
         #initialize condition
         cond = ""
@@ -109,35 +121,37 @@ class access:
         WHERE"+cond[:-2]
 
         #query 2 - number of stores that carry it
-        q2 = "SELECT prd.pid, COUNT(crr.sid) FROM products prd, carries crr ON prd.pid=crr.pid \
+        q2 = "SELECT prd.pid, COUNT(crr.sid) AS q2 FROM products prd, carries crr ON prd.pid=crr.pid \
         WHERE"+cond[:-2]+" GROUP BY prd.pid"
 
         #query 3 - the number of stores that have it in stock
-        q3 = "SELECT prd.pid, COUNT(crr.sid) FROM products prd, carries crr ON prd.pid=crr.pid \
+        q3 = "SELECT prd.pid, COUNT(crr.sid) AS q3 FROM products prd, carries crr ON prd.pid=crr.pid \
         WHERE"+cond[:-2]+" AND crr.qty > 0 GROUP BY prd.pid"
 
         #query 4 - the minimum price among the stores that carry it
         q4 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
         WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid)"
 
-        #query 5 - the number of orders within the past 7 days
+        #query 5 - the minimum price among the stores that have the product in stock
         q5 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
         WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid AND crr.qty > 0)"
 
         #query 6 - the number of orders within the past 7 days ??
-        q6 = "SELECT oln.pid, COUNT(oln.oid) FROM orders ord, olines oln ON ord.oid=oln.oid \
+        q6 = "SELECT oln.pid, COUNT(oln.oid) AS q6 FROM orders ord, olines oln ON ord.oid=oln.oid \
         WHERE ord.odate BETWEEN DATETIME('now') AND DATETIME('now', '-7 day') AND" +cond2[:-2]+" GROUP BY oln.pid"
         #print q6
         #main
-        main = "SELECT * FROM ((((({}) LEFT OUTER JOIN ({}) USING (pid)) LEFT OUTER JOIN ({}) \
-        USING (pid)) LEFT OUTER JOIN ({}) USING (pid)) LEFT OUTER JOIN ({}) USING (pid)) \
-        LEFT OUTER JOIN ({}) USING (pid);".format(q1, q2, q3, q4, q5, q6)
+        main = "SELECT a.pid, a.name, a.unit, IFNULL(b.q2, 0), IFNULL(c.q3, 0), IFNULL(d.uprice, 'NA'), IFNULL(e.uprice, 'NA'), IFNULL(f.q6, 0) \
+        FROM ((((({}) a LEFT OUTER JOIN ({}) b USING (pid)) LEFT OUTER JOIN ({}) c \
+        USING (pid)) LEFT OUTER JOIN ({}) d USING (pid)) LEFT OUTER JOIN ({}) e USING (pid)) \
+        LEFT OUTER JOIN ({}) f USING (pid);".format(q1, q2, q3, q4, q5, q6)
 
         self.cursor.execute(main)
         return self.cursor.fetchall()
 
 
     def product_details(self, product_id):
+
         '''
         Takes in a product ID and returns the details of that product. the
         details returned should adhere to the following specification
@@ -150,9 +164,25 @@ class access:
         (1) the stores that have the product in stock will be listed before those that don't;
 
         (2) the stores in each case will be sorted based on the store price (from lowest to highest).
-        '''
 
-        pass
+        Args: product_id (str)
+        Returns: (product detial (list), store info (list))
+        '''
+        SQL = "SELECT prd.pid, prd.name, prd.unit, prd.cat FROM products prd \
+        WHERE prd.pid = '{}';".format(product_id)
+        self.cursor.execute(SQL)
+        t1 = self.cursor.fetchall()
+
+        SQL = "SELECT str.sid, str.name, crr.uprice, crr.qty, SUM(oln.qty) \
+        FROM products prd, carries crr, stores str, olines oln, orders ord ON prd.pid=crr.pid \
+        AND str.sid=crr.sid AND oln.sid=str.sid AND ord.oid=oln.oid WHERE prd.pid='{}' \
+        AND 14>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY str.sid ORDER BY crr.qty > 0, crr.uprice ASC;".format(product_id)
+        #NOTE above query could be wrong
+
+        self.cursor.execute(SQL)
+        t2 = self.cursor.fetchall()
+        return (t1, t2)
+
 
 
 
@@ -161,4 +191,11 @@ if __name__ == "__main__":
     #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
     #a.login("bobbylee", "45673111", customer=False)
     r= a.search(["canned", "beef"])
-    a.get_products(r)
+    x = a.get_products(r)
+    for i in x:
+        print i
+    x2 = a.product_details('p30')
+    for i in x2[0]:
+        print i
+    for i in x2[1]:
+        print i
