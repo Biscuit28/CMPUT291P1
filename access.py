@@ -1,6 +1,6 @@
 import sqlite3
+from customer import customer
 from collections import defaultdict
-
 
 class access:
     '''
@@ -79,9 +79,13 @@ class access:
         #    return (False, "account already exists")
 
         # If program gets to here, user information should be okay (already validated)
-        self.cursor.execute("SELECT MAX(cid) FROM customers;")
+        self.cursor.execute("SELECT MAX(cast(substr(cid, 2) as int)) FROM customers;")
         res=self.cursor.fetchone()
-        ID = str(int(res[0][1:]) + 1)
+        print res
+        #ID = str(int(res[0][1:]) + 1)
+        ID = str(res[0] + 1)
+        print ID
+        ID = ''.join(('c', ID))
         self.cursor.execute("INSERT INTO customers (cid, name, address, pwd) VALUES (?, ?, ?, ?);",
         (ID, username, address, password))
         self.conn.commit()
@@ -197,7 +201,16 @@ class access:
 
 
 
-        pass
+
+        return
+
+    def make_customer(self, username):
+            self.cursor.execute("SELECT * FROM customers WHERE name=?", username)
+            r = self.cursor.fetchone()
+            print r
+            cid, address = r[0], r[2]
+            u = customer(cid, username, address, password)
+
 
 def uiTest():
     a = access()
@@ -212,13 +225,56 @@ def uiTest():
         # login
         verified = False
         while (verified == False):
-            user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            while (True):
+                user_typ = input("Type 1 for customer login or 0 for agent login: ")
+                if (user_typ in [0,1]):
+                    break
             username = str(raw_input("Username: ").lower()).rstrip()
             password = str(raw_input("Password: "))
             verified = a.login(user_typ, username, password)[0]
 
-        #print ("user {} is verified with type {}").format(username, user_typ)
+    #print ("user {} is verified with type {}").format(username, user_typ)
 
+    #if (user_typ == 1):
+        # make customer object
+        #q = "SELECT * FROM customers WHERE name=?".format(username)
+
+        #cid, address = r[0], r[2]
+        #u = customer(cid, username, address, password)
+
+    # user verified
+    if (user_typ == 1):
+        # customer --> give customer priviliges
+        searchInput = raw_input("Searchbar: ")
+        searchInput.split()
+        r= a.search(searchInput)
+        num_of_prod = len(r)
+        for x in range(num_of_prod):
+            #print("|    pid    |    name             |")
+            #p_info = a.product_details(r[x])
+            #print("|    {:>15}    |    {:>15}             |".format(p_info[0], p_info[1]))
+
+            if ((x % 5) == 0):
+                #print("| pid | name |")
+                #raw_input("Show more?: ")
+                if (x != 0):
+                    more = raw_input("Show more? y/n: ").lower()
+                    if (more == 'n'):
+                        break
+                print("|          pid          |    name             ")
+
+
+            a.cursor.execute("SELECT * FROM products WHERE pid=?;", (r[x],))
+            p_info = a.cursor.fetchone()
+            #p_info = a.product_details(r[x])
+            print("|    {:>15}    |    {}             ".format(p_info[0], p_info[1]))
+
+            #a.cursor.execute("SELECT * FROM products WHERE pid=?", (r[x]))
+            #p_info = a.cursor.fetchone()
+            #print("| {} | {} |".format(p_info[0],p_info[1] ))
+            #print("| {} |".format(r[x]))
+            #p_info = a.product_details(r[x])
+            #print("|    {:>15}    |    {:>15}             |".format(p_info[0], p_info[1]))
 
 
 
