@@ -43,9 +43,9 @@ class access:
             print "Username already exists"
             return (False, "account already exists")
         else:
-            self.cursor.execute("SELECT MAX(cid) FROM customers;")
+            self.cursor.execute("SELECT MAX(CAST(substr(cid, 2) AS int)) FROM customers;")
             res=self.cursor.fetchone()
-            ID = str(int(res[0]) + 1)
+            ID = "c"+str(int(res[0]) + 1)
             self.cursor.execute("INSERT INTO customers (cid, name, address, pwd) VALUES (?, ?, ?, ?);",
             (ID, username, address, password))
             self.conn.commit()
@@ -188,14 +188,14 @@ class access:
 
 if __name__ == "__main__":
     a = access()
-    #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
-    #a.login("bobbylee", "45673111", customer=False)
-    r= a.search(["canned", "beef"])
-    x = a.get_products(r)
-    for i in x:
-        print i
-    x2 = a.product_details('p30')
-    for i in x2[0]:
-        print i
-    for i in x2[1]:
-        print i
+    a.create_account("bobbymee", "45673111", "45673111", "2005 Hilliard Place NW")
+    # a.login("bobbylee", "45673111", customer=False)
+    # r= a.search(["canned", "beef"])
+    # x = a.get_products(r)
+    # for i in x:
+    #     print i
+    # x2 = a.product_details('p30')
+    # for i in x2[0]:
+    #     print i
+    # for i in x2[1]:
+    #     print i
