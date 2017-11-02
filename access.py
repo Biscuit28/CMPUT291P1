@@ -42,7 +42,7 @@ class access:
         while (True):
             password = raw_input("Create password: ")
             password_rpt = raw_input("Type password again: ")
-            if (len(password) < 8):
+            if (len(password) < 7):
                 print "password must be 7 characters"
             elif (password == password_rpt):
                 break
@@ -213,13 +213,12 @@ class access:
         (2) the stores in each case will be sorted based on the store price (from lowest to highest).
 
         Args: product_id (str)
-        Returns: (product detial (list), store info (list))
+        Returns: (product detail (list), store info (list))
         '''
         SQL = "SELECT prd.pid, prd.name, prd.unit, prd.cat FROM products prd \
         WHERE prd.pid = '{}';".format(product_id)
         self.cursor.execute(SQL)
-        t1 = self.cursor.fetchall()
-
+        t1 = self.cursor.fetchone()
         SQL = "SELECT str.sid, str.name, crr.uprice, crr.qty, SUM(oln.qty) \
         FROM products prd, carries crr, stores str, olines oln, orders ord ON prd.pid=crr.pid \
         AND str.sid=crr.sid AND oln.sid=str.sid AND ord.oid=oln.oid WHERE prd.pid='{}' \
@@ -242,6 +241,20 @@ class access:
             cid, address = r[0], r[2]
             u = customer(cid, username, address, password)
 
+    def ui_Login(self):
+        while (True):
+            user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            if (user_typ in [0,1]):
+                break
+        for attempt in range(3):
+            username = str(raw_input("Username: ").lower()).rstrip()
+            password = str(raw_input("Password: "))
+            verified = self.login(user_typ, username, password)[0]
+            if (verified):
+                return (True, user_typ, username)
+
+        return False
+
 
 def uiTest():
     a = access()
@@ -251,61 +264,51 @@ def uiTest():
     if (usr_inp == 0):
         # Create user
         a.create_account()
-        uiTest()
+        return uiTest()
     elif (usr_inp == 1):
         # login
-        verified = False
-        while (verified == False):
-            while (True):
-                user_typ = input("Type 1 for customer login or 0 for agent login: ")
-                if (user_typ in [0,1]):
-                    break
-            username = str(raw_input("Username: ").lower()).rstrip()
-            password = str(raw_input("Password: "))
-            verified = a.login(user_typ, username, password)[0]
+        verify = a.ui_Login()
+        if (verify == False):
+            print "Max attempts reached, please try again later!"
+            raise SystemExit
+
+        user_typ = verify[1]
+        username = verify[2]
+
 
     #print ("user {} is verified with type {}").format(username, user_typ)
-
-    #if (user_typ == 1):
-        # make customer object
-        #q = "SELECT * FROM customers WHERE name=?".format(username)
-
-        #cid, address = r[0], r[2]
-        #u = customer(cid, username, address, password)
 
     # user verified
     if (user_typ == 1):
         # customer --> give customer priviliges
         searchInput = raw_input("Searchbar: ")
-        searchInput.split()
+        searchInput = searchInput.split()
         r= a.search(searchInput)
-        num_of_prod = len(r)
-        for x in range(num_of_prod):
-            #print("|    pid    |    name             |")
-            #p_info = a.product_details(r[x])
-            #print("|    {:>15}    |    {:>15}             |".format(p_info[0], p_info[1]))
-
-            if ((x % 5) == 0):
-                #print("| pid | name |")
-                #raw_input("Show more?: ")
-                if (x != 0):
+        count = 0
+        for prod in r:
+            if ((count % 5) == 0):
+                if (count != 0):
                     more = raw_input("Show more? y/n: ").lower()
                     if (more == 'n'):
                         break
-                print("|          pid          |    name             ")
+                print("|PID|NAME|UNIT|NUM_OF_STORES|")
+            # t1 layout: for each product (pid, name, unit, cat)
+            # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
+            # t2 query doesnt fully work I dont think
+            # doesnt give proper num of orders
+            t1, t2 = a.product_details(prod)
 
+            if len(t2) > 0: # only display items that are carried by a store
+                '''
+                For each matching product, list the product id, name, unit, the
+                number of stores that carry it, the number of stores that have it
+                in stock, the minimum price among the stores that carry it,
+                the minimum price among the stores that have the product in stock,
+                and the number of orders within the past 7 days.
+                '''
+                print("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
+                count += 1
 
-            a.cursor.execute("SELECT * FROM products WHERE pid=?;", (r[x],))
-            p_info = a.cursor.fetchone()
-            #p_info = a.product_details(r[x])
-            print("|    {:>15}    |    {}             ".format(p_info[0], p_info[1]))
-
-            #a.cursor.execute("SELECT * FROM products WHERE pid=?", (r[x]))
-            #p_info = a.cursor.fetchone()
-            #print("| {} | {} |".format(p_info[0],p_info[1] ))
-            #print("| {} |".format(r[x]))
-            #p_info = a.product_details(r[x])
-            #print("|    {:>15}    |    {:>15}             |".format(p_info[0], p_info[1]))
 
 
 if __name__ == "__main__":
