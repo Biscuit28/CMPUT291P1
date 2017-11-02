@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 
 class customer:
+
     '''
     module responsible for customer orders, cart etc..
     '''
@@ -31,6 +32,7 @@ class customer:
         Fuction takes in a product id and store id and adds product to cart.
         Function will return false if the qty ordered exceeds quantity in stock.
         Returns true otherwise
+
         Args: product_id (str), store_id (int), qty (int)
         Returns: success (boolean)
         '''
@@ -61,6 +63,7 @@ class customer:
         Function takes a product and the store it is from and removes amount
         defined by quantity in the cart. If Var arg all is set to true, it will
         automatically remove the item completely from the cart
+
         Args: product_id (str), store_id (int), qty (int)
         Returns: success (boolean)
         '''
@@ -83,6 +86,7 @@ class customer:
 
         '''
         Returns the total value of the items in cart
+
         Args: None
         Returns: cart value (float)
         '''
@@ -99,6 +103,7 @@ class customer:
         any quantity in cart exceeds the qty available at the time of ordering,
         function returns false. If success, function returns true as well as the
         order total
+
         Args: None
         Returns: (success (boolean), total (int))
         '''
@@ -126,6 +131,7 @@ class customer:
         function returns false. If success, a unique order id is genereated, and
         is added to customers order history as well as added to olines and orders
         in database. Cart will also be cleared on success
+
         Args: None
         Returns: (success (boolean), order_id (int))
         '''
@@ -157,10 +163,56 @@ class customer:
             return (True, order_id)
 
 
+    def order_history(self):
+
+        '''
+        Function retrieves order history according to the following specification
+
+        listing should include for each order, the order id, order date, the number
+        of products ordered and the total price; the orders should be listed in a
+        sorted order with more recent orders listed first.
+
+        Args: None
+        Returns: list of rows (list (tuple))
+        '''
+        SQL="SELECT ord.oid, ord.odate, COUNT(DISTINCT(oln.pid)), SUM(oln.uprice*oln.qty) \
+        FROM orders ord, olines oln ON ord.oid=oln.oid WHERE ord.cid='{}' GROUP BY ord.oid \
+        ORDER BY ord.odate DESC;".format(self.id)
+        self.cursor.execute(SQL)
+        return self.cursor.fetchall()
+
+
+    def order_detail(self, order_id):   #NOTE our database is kinda messed
+
+        '''
+        Function returns the details of a given order (order) id returns info
+        that meets the following specification
+
+        Details should include delivery information such as tracking number, pick up
+        and drop off times, the address to be delivered, and a listing of the
+        products in the order, which will include for each product the store id,
+        the store name, the product id, the product name, quantity, unit and
+        unit price
+
+        Args: order_id (int)
+        Returns: detail (tuple), product_detail (list)(tuple)
+        '''
+        #tracking number, pick up and drop off times, the address to be delivered
+        SQL="SELECT dlr.trackingNo, dlr.pickUpTime, IFNULL(dlr.dropOffTime, 'NA'), ord.address \
+        FROM orders ord, deliveries dlr ON ord.oid=dlr.oid WHERE ord.oid={};".format(order_id)
+        self.cursor.execute(SQL)
+        detail=self.cursor.fetchone()
+
+        #listing of the products in the order, which will include for each product the store id,
+        #the store name, the product id, the product name, quantity, unit and unit price
+        SQL="SELECT str.sid, str.name, oln.pid, prd.name, oln.qty, prd.unit, oln.uprice \
+        FROM orders ord, olines oln, stores str, products prd ON ord.oid=oln.oid \
+        AND  oln.sid=str.sid AND prd.pid=oln.pid WHERE ord.oid={};".format(order_id)
+        self.cursor.execute(SQL)
+        product_detail=self.cursor.fetchall()
+        return (detail, product_detail)
+
+
 
 if __name__ == "__main__":
     c=customer("davood")
-    c.add_to_cart("p1", 2, 100)
-    c.add_to_cart("p3", 1, 10)
-    print c.cart
-    print c.confirm_order()

@@ -216,4 +216,3 @@ class customer:
 
 if __name__ == "__main__":
     c=customer("davood")
-    
