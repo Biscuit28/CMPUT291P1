@@ -31,7 +31,6 @@ class customer:
         Fuction takes in a product id and store id and adds product to cart.
         Function will return false if the qty ordered exceeds quantity in stock.
         Returns true otherwise
-
         Args: product_id (str), store_id (int), qty (int)
         Returns: success (boolean)
         '''
@@ -62,7 +61,6 @@ class customer:
         Function takes a product and the store it is from and removes amount
         defined by quantity in the cart. If Var arg all is set to true, it will
         automatically remove the item completely from the cart
-
         Args: product_id (str), store_id (int), qty (int)
         Returns: success (boolean)
         '''
@@ -85,7 +83,6 @@ class customer:
 
         '''
         Returns the total value of the items in cart
-
         Args: None
         Returns: cart value (float)
         '''
@@ -102,7 +99,6 @@ class customer:
         any quantity in cart exceeds the qty available at the time of ordering,
         function returns false. If success, function returns true as well as the
         order total
-
         Args: None
         Returns: (success (boolean), total (int))
         '''
@@ -130,7 +126,6 @@ class customer:
         function returns false. If success, a unique order id is genereated, and
         is added to customers order history as well as added to olines and orders
         in database. Cart will also be cleared on success
-
         Args: None
         Returns: (success (boolean), order_id (int))
         '''
