@@ -52,22 +52,22 @@ INSERT INTO stores VALUES(8,'lucky 97','780-666-777','56-132 St NW');
 
 
 INSERT INTO customers VALUES('c1','davood','CS Dept,University of Alberta', 00000000);
-INSERT INTO customers VALUES('c2','John Doe','111-222 Ave', 00000001);
+INSERT INTO customers VALUES('c2','john doe','111-222 Ave', 00000001);
 INSERT INTO customers VALUES('c3','peter','102-83 Ave', 00000002);
-INSERT INTO customers VALUES('c4','Jessica','101-54 St NW', 00000003);
-INSERT INTO customers VALUES('c5','Allen','4520-9569 Vegas Rd NW', 00000004);
-INSERT INTO customers VALUES('c6','Paul','105-74 Ave', 00000005);
-INSERT INTO customers VALUES('c7','Ashley','78-23 Ave', 00000006);
-INSERT INTO customers VALUES('c8','Emma','96-89 St NW', 00000007);
-INSERT INTO customers VALUES('c9','Mia','87 Strathearn Crescent NW', 00000008);
-INSERT INTO customers VALUES('c10','Oliver','91 Saskatchewan Dr', 00000009);
+INSERT INTO customers VALUES('c4','jessica','101-54 St NW', 00000003);
+INSERT INTO customers VALUES('c5','allen','4520-9569 Vegas Rd NW', 00000004);
+INSERT INTO customers VALUES('c6','paul','105-74 Ave', 00000005);
+INSERT INTO customers VALUES('c7','ashley','78-23 Ave', 00000006);
+INSERT INTO customers VALUES('c8','emma','96-89 St NW', 00000007);
+INSERT INTO customers VALUES('c9','mia','87 Strathearn Crescent NW', 00000008);
+INSERT INTO customers VALUES('c10','oliver','91 Saskatchewan Dr', 00000009);
 
-INSERT INTO agents VALUES('a1', 'Joshua', 10000000);
-INSERT INTO agents VALUES('a2', 'Harry', 10000001);
-INSERT INTO agents VALUES('a3', 'Oliver', 10000002);
-INSERT INTO agents VALUES('a4', 'Emily', 10000003);
-INSERT INTO agents VALUES('a5', 'Peter', 10000004);
-INSERT INTO agents VALUES('a6', 'Jessica', 10000005);
+INSERT INTO agents VALUES('a1', 'joshua', 10000000);
+INSERT INTO agents VALUES('a2', 'harry', 10000001);
+INSERT INTO agents VALUES('a3', 'oliver', 10000002);
+INSERT INTO agents VALUES('a4', 'emily', 10000003);
+INSERT INTO agents VALUES('a5', 'peter', 10000004);
+INSERT INTO agents VALUES('a6', 'jessica', 10000005);
 
 INSERT INTO carries VALUES(2,'p1',100,4.7);
 INSERT INTO carries VALUES(2,'p2',80,2.6);
