@@ -1,4 +1,6 @@
 import sqlite3
+import sys
+import access
 from customer import customer
 from collections import defaultdict
 
@@ -243,60 +245,75 @@ class access:
 
     def ui_Login(self):
         while (True):
-            user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            #user_typ = input("Type 1 for customer login or 0 for agent login: ")
+            #print("Type 1 for customer login or 0 for agent login: ")
+            #user_typ = self.get_input("Type 1 for customer login or 0 for agent login: ")
+            user_typ = self.get_input("Type 1 for customer login or 0 for agent login: ")
             if (user_typ in [0,1]):
                 break
         for attempt in range(3):
-            username = str(raw_input("Username: ").lower()).rstrip()
-            password = str(raw_input("Password: "))
+            # Use Raw input here (dont use get_input function)
+            username = str(raw_input("-->Username: ").lower()).rstrip()
+            password = str(raw_input("-->Password: "))
             verified = self.login(user_typ, username, password)[0]
             if (verified):
                 return (True, user_typ, username)
 
         return False
 
+    def inp_help(self):
+        print("commands can be used on any line that does not have an arrow (-->)")
+        commands = ["--help", "--quit"]
+        for command in commands:
+            print(command)
 
-def uiTest():
-    a = access()
-    usr_inp = input("Type 1 to login or 0 to sign up: ")
-    while (usr_inp not in [0, 1]):
-        usr_inp = input("Type 1 to login or 0 to sign up: ")
-    if (usr_inp == 0):
-        # Create user
-        a.create_account()
-        return uiTest()
-    elif (usr_inp == 1):
-        # login
-        verify = a.ui_Login()
-        if (verify == False):
-            print "Max attempts reached, please try again later!"
-            raise SystemExit
+    def inp_quit(self):
+        print("Have nice day!")
+        raise SystemExit
 
-        user_typ = verify[1]
-        username = verify[2]
+    # def inp_logout(self):
+    #     # logout doesnt really log user out, it basically just retarts program
+    #     # which means user can logout technically before even logging in lol
+    #     # maybe change later --> if not verified say "cant logout before logged in"
+    #     return uiTest()
 
+    def get_input(self, message):
+        # Function to use when getting input from user
+        # checks is input is a command from user, if not, return output as is
+        # output will always be string so if we want to return other type, must check and change (eg int)
+        #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
+        cMap = {"--help":self.inp_help, "--quit":self.inp_quit}
+        while True:
+            inp = raw_input(message)
+            if inp in cMap.keys():
+                cMap[inp]()
+            else:
+                break
+        if (inp.isdigit()):
+            inp = int(inp)
+        return inp
 
-    #print ("user {} is verified with type {}").format(username, user_typ)
-
-    # user verified
-    if (user_typ == 1):
-        # customer --> give customer priviliges
-        searchInput = raw_input("Searchbar: ")
-        searchInput = searchInput.split()
-        r= a.search(searchInput)
+    def display_search_results(self, results):
+        # (Not finished yet)
+        # arguments:
+        # --> results: list of pids
+        #
+        # Return:
+        # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
         count = 0
-        for prod in r:
+        for prod in results:
             if ((count % 5) == 0):
                 if (count != 0):
-                    more = raw_input("Show more? y/n: ").lower()
+                    more = get_input("Show more? y/n: ")
                     if (more == 'n'):
                         break
-                print("|PID|NAME|UNIT|NUM_OF_STORES|")
+                print ("|PID|NAME|UNIT|NUM_OF_STORES|")
+
             # t1 layout: for each product (pid, name, unit, cat)
             # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
             # t2 query doesnt fully work I dont think
             # doesnt give proper num of orders
-            t1, t2 = a.product_details(prod)
+            t1, t2 = self.product_details(prod)
 
             if len(t2) > 0: # only display items that are carried by a store
                 '''
@@ -306,17 +323,50 @@ def uiTest():
                 the minimum price among the stores that have the product in stock,
                 and the number of orders within the past 7 days.
                 '''
-                print("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
+                print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
                 count += 1
 
 
 
+
+def uiTest():
+    a = access()
+    print("Welcome to access.py, type --help for list of commands")
+    print("press Enter key")
+    raw_input()
+    usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
+    while (usr_inp not in [0, 1]):
+        usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
+    if (usr_inp == 0):
+        # Create user
+        a.create_account()
+        return uiTest()
+    elif (usr_inp == 1):
+        # login
+        verified = a.ui_Login()
+        if (verified == False):
+            print "Max attempts reached, please try again later!"
+            raise SystemExit
+
+
+        user_typ = verified[1]
+        username = verified[2]
+
+
+    #print ("user {} is verified with type {}").format(username, user_typ)
+
+    # user verified
+    if (user_typ == 1):
+        # customer --> give customer priviliges
+
+        userC = customer(username)      # make customer object
+
+        searchInput = a.get_input("Searchbar: ")
+        searchInput = searchInput.split()
+        r= a.search(searchInput)
+        a.display_search_results(r)
+
 if __name__ == "__main__":
-    #a = access()
-    #a.create_account("bobbylee", "4567311", "45673111", "2005 Hilliard Place NW")
-    #a.login("bobbylee", "45673111", customer=False)
-    #r= a.search(["canned", "beef"])
-    #print(r)
-    #a.get_products(r)
-    #print(a)
+
+
     uiTest()

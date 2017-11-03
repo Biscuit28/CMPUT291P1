@@ -12,18 +12,24 @@ class customer:
         self.name=customer
         self.conn = sqlite3.connect("./database.db") #connection to move database
         self.cursor = self.conn.cursor()
+        # We shouldnt need to re-verify user --> already verified
         SQL = "SELECT * FROM customers cust WHERE cust.name='{}'".format(customer)
         self.cursor.execute(SQL)
         result=self.cursor.fetchone()
-        if result != None:
-            self.id=result[0]
-            self.address=result[2]
-            self.password=result[3]
-            #Cart is a dictionary where keys are pid+'*'+sid and value the quantity
-            self.cart=dict()
-            print "Success! Welcome - {}".format(customer)
-        else:
-            print "WARNING - customer does not exist"
+        # if result != None:
+        #     self.id=result[0]
+        #     self.address=result[2]
+        #     self.password=result[3]
+        #     #Cart is a dictionary where keys are pid+'*'+sid and value the quantity
+        #     self.cart=dict()
+        #     print "Success! Welcome - {}".format(customer)
+        # else:
+        #     print "WARNING - customer does not exist"
+        self.id = result[0]
+        self.address = result[2]
+        self.cart=dict()
+
+
 
 
     def add_to_cart(self, product_id, store_id, qty):
