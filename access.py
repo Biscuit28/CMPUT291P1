@@ -1,6 +1,7 @@
 import sqlite3
 import sys
 import access
+import getpass
 from customer import customer
 from collections import defaultdict
 
@@ -13,6 +14,7 @@ class access:
 
          self.conn = sqlite3.connect("./database.db") #connection to move database
          self.cursor = self.conn.cursor()
+         self.user_typ = -1
 
 
     def create_account(self):
@@ -244,6 +246,8 @@ class access:
             u = customer(cid, username, address, password)
 
     def ui_Login(self):
+        # used function login, but formats nicely for ui
+        # --> 3 attempts and checks user_typ is 1 or 0
         while (True):
             #user_typ = input("Type 1 for customer login or 0 for agent login: ")
             #print("Type 1 for customer login or 0 for agent login: ")
@@ -254,7 +258,8 @@ class access:
         for attempt in range(3):
             # Use Raw input here (dont use get_input function)
             username = str(raw_input("-->Username: ").lower()).rstrip()
-            password = str(raw_input("-->Password: "))
+            #password = str(raw_input("-->Password: "))
+            password = getpass.getpass("-->Password: ")
             verified = self.login(user_typ, username, password)[0]
             if (verified):
                 return (True, user_typ, username)
@@ -263,13 +268,26 @@ class access:
 
     def inp_help(self):
         print("commands can be used on any line that does not have an arrow (-->)")
-        commands = ["--help", "--quit"]
+        commands = ["--help", "--search", "--quit"]
         for command in commands:
             print(command)
 
     def inp_quit(self):
         print("Have nice day!")
         raise SystemExit
+
+    def inp_search(self):
+        # if user is customer
+
+        if (self.user_typ == 1):
+            searchInput = self.get_input("Searchbar: ")
+            searchInput = searchInput.split()
+            r= self.search(searchInput)
+            self.display_search_results(r)
+        else:
+            print ("Please log in as customer to use search feature.")
+
+
 
     # def inp_logout(self):
     #     # logout doesnt really log user out, it basically just retarts program
@@ -282,7 +300,7 @@ class access:
         # checks is input is a command from user, if not, return output as is
         # output will always be string so if we want to return other type, must check and change (eg int)
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
-        cMap = {"--help":self.inp_help, "--quit":self.inp_quit}
+        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search}
         while True:
             inp = raw_input(message)
             if inp in cMap.keys():
@@ -302,20 +320,20 @@ class access:
         # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
         count = 0
         for prod in results:
-            if ((count % 5) == 0):
-                if (count != 0):
-                    more = get_input("Show more? y/n: ")
-                    if (more == 'n'):
-                        break
-                print ("|PID|NAME|UNIT|NUM_OF_STORES|")
-
             # t1 layout: for each product (pid, name, unit, cat)
             # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
             # t2 query doesnt fully work I dont think
             # doesnt give proper num of orders
             t1, t2 = self.product_details(prod)
+            if len(t2) > 0:             # only display products that are carried by a store
+                                        # maybe check that store qty != 0 too
+                if ((count % 5) == 0):
+                    if (count != 0):
+                        more = get_input("Show more? y/n: ")
+                        if (more == 'n'):
+                            break
+                    print ("|PID|NAME|UNIT|NUM_OF_STORES|")
 
-            if len(t2) > 0: # only display items that are carried by a store
                 '''
                 For each matching product, list the product id, name, unit, the
                 number of stores that carry it, the number of stores that have it
@@ -327,44 +345,73 @@ class access:
                 count += 1
 
 
+    def ui_Home(self):
+        print("Welcome to access.py, type --help for list of commands")
+        print("press Enter key")
+        raw_input()
+        usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
+        while (usr_inp not in [0, 1]):
+            usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
+        if (usr_inp == 0):
+            # Create user
+            self.create_account()
+            return uiTest()
+        elif (usr_inp == 1):
+            # login
+            verified = self.ui_Login()
+            if (verified == False):
+                print "Max attempts reached, please try again later!"
+                raise SystemExit
+
+            return verified
+            #user_typ = verified[1]
+            #username = verified[2]
 
 
 def uiTest():
     a = access()
-    print("Welcome to access.py, type --help for list of commands")
-    print("press Enter key")
-    raw_input()
-    usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
-    while (usr_inp not in [0, 1]):
-        usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
-    if (usr_inp == 0):
-        # Create user
-        a.create_account()
-        return uiTest()
-    elif (usr_inp == 1):
-        # login
-        verified = a.ui_Login()
-        if (verified == False):
-            print "Max attempts reached, please try again later!"
-            raise SystemExit
 
+    ###########################################################################
+    # HOME SCREEN
+    ###########################################################################
+    # print("Welcome to access.py, type --help for list of commands")
+    # print("press Enter key")
+    # raw_input()
+    # usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
+    # while (usr_inp not in [0, 1]):
+    #     usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
+    # if (usr_inp == 0):
+    #     # Create user
+    #     a.create_account()
+    #     return uiTest()
+    # elif (usr_inp == 1):
+    #     # login
+    #     verified = a.ui_Login()
+    #     if (verified == False):
+    #         print "Max attempts reached, please try again later!"
+    #         raise SystemExit
+    #
+    #     user_typ = verified[1]
+    #     username = verified[2]
+    verified_user = a.ui_Home()
+    user_typ = verified_user[1]
+    username = verified_user[2]
+    ###########################################################################
 
-        user_typ = verified[1]
-        username = verified[2]
+        #print ("user {} is verified with type {}").format(username, user_typ)
 
-
-    #print ("user {} is verified with type {}").format(username, user_typ)
-
-    # user verified
+        # user verified
     if (user_typ == 1):
         # customer --> give customer priviliges
-
+        a.user_typ = 1
         userC = customer(username)      # make customer object
 
-        searchInput = a.get_input("Searchbar: ")
-        searchInput = searchInput.split()
-        r= a.search(searchInput)
-        a.display_search_results(r)
+        while True:
+            a.get_input("MP1: ")
+            # searchInput = a.get_input("Searchbar: ")
+            # searchInput = searchInput.split()
+            # r= a.search(searchInput)
+            # a.display_search_results(r)
 
 if __name__ == "__main__":
 
