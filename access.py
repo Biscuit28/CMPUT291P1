@@ -145,63 +145,63 @@ class access:
         return sorted(products, key=products.get, reverse=True)
 
 
-    def get_products(self, products):
+        def get_products(self, products):
 
-        '''
-        Takes in a list of products, and finds the details according to the
-        following specification:
+            '''
+            Takes in a list of products, and finds the details according to the
+            following specification:
 
-        For each matching product, list the product id, name, unit, the number
-        of stores that carry it, the number of stores that have it in stock, the
-        minimum price among the stores that carry it, the minimum price among the
-        stores that have the product in stock, and the number of orders within the past 7 days.
+            For each matching product, list the product id, name, unit, the number
+            of stores that carry it, the number of stores that have it in stock, the
+            minimum price among the stores that carry it, the minimum price among the
+            stores that have the product in stock, and the number of orders within the past 7 days.
 
-        Args: products (list of pid's)
-        Returns: product info (list)
-        '''
-        #initialize condition
-        cond = ""
-        cond2 = ""
-        for prd in products:
-            cond += " prd.pid='{}' OR".format(prd)
-            cond2 += " oln.pid='{}' OR".format(prd)
+            Args: products (list of pid's)
+            Returns: product info (list)
+            '''
+            #initialize condition
+            cond = ""
+            cond2 = ""
+            for prd in products:
+                cond += " prd.pid='{}' OR".format(prd)
+                cond2 += " oln.pid='{}' OR".format(prd)
 
-        #query 1 - product id, name, unit
-        q1 = "SELECT prd.pid, prd.name, prd.unit FROM products prd \
-        WHERE"+cond[:-2]
+            #query 1 - product id, name, unit
+            q1 = "SELECT prd.pid, prd.name, prd.unit FROM products prd \
+            WHERE"+cond[:-2]
 
-        #query 2 - number of stores that carry it
-        q2 = "SELECT prd.pid, COUNT(crr.sid) AS q2 FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE"+cond[:-2]+" GROUP BY prd.pid"
+            #query 2 - number of stores that carry it
+            q2 = "SELECT prd.pid, COUNT(crr.sid) AS q2 FROM products prd, carries crr ON prd.pid=crr.pid \
+            WHERE"+cond[:-2]+" GROUP BY prd.pid"
 
-        #query 3 - the number of stores that have it in stock
-        q3 = "SELECT prd.pid, COUNT(crr.sid) AS q3 FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE"+cond[:-2]+" AND crr.qty > 0 GROUP BY prd.pid"
+            #query 3 - the number of stores that have it in stock
+            q3 = "SELECT prd.pid, COUNT(crr.sid) AS q3 FROM products prd, carries crr ON prd.pid=crr.pid \
+            WHERE"+cond[:-2]+" AND crr.qty > 0 GROUP BY prd.pid"
 
-        #query 4 - the minimum price among the stores that carry it
-        q4 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid)"
+            #query 4 - the minimum price among the stores that carry it
+            q4 = "SELECT prd.pid, MIN(crr.uprice) AS uprice FROM products prd, carries crr ON prd.pid=crr.pid \
+            WHERE" +cond[:-2] + " GROUP BY crr.pid"
 
-        #query 5 - the minimum price among the stores that have the product in stock
-        q5 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid AND crr.qty > 0)"
+            #query 5 - the minimum price among the stores that have the product in stock
+            q5 = "SELECT prd.pid, MIN(crr.uprice) AS uprice FROM products prd, carries crr ON prd.pid=crr.pid \
+            WHERE" +cond[:-2] + " GROUP BY crr.pid HAVING crr.qty>0"
 
-        #query 6 - the number of orders within the past 7 days ??
-        q6 = "SELECT oln.pid, COUNT(oln.oid) AS q6 FROM orders ord, olines oln ON ord.oid=oln.oid \
-        WHERE ord.odate BETWEEN DATETIME('now') AND DATETIME('now', '-7 day') AND" +cond2[:-2]+" GROUP BY oln.pid"
-        #print q6
-        #main
-        main = "SELECT a.pid, a.name, a.unit, IFNULL(b.q2, 0), IFNULL(c.q3, 0), IFNULL(d.uprice, 'NA'), IFNULL(e.uprice, 'NA'), IFNULL(f.q6, 0) \
-        FROM ((((({}) a LEFT OUTER JOIN ({}) b USING (pid)) LEFT OUTER JOIN ({}) c \
-        USING (pid)) LEFT OUTER JOIN ({}) d USING (pid)) LEFT OUTER JOIN ({}) e USING (pid)) \
-        LEFT OUTER JOIN ({}) f USING (pid);".format(q1, q2, q3, q4, q5, q6)
+            #query 6 - the number of orders within the past 7 days ??
+            q6 = "SELECT oln.pid, COUNT(oln.oid) AS q6 FROM orders ord, olines oln ON ord.oid=oln.oid \
+            WHERE ord.odate BETWEEN DATETIME('now') AND DATETIME('now', '-7 day') AND" +cond2[:-2]+" GROUP BY oln.pid"
+            #print q6
 
-        self.cursor.execute(main)
-        result = self.cursor.fetchall()
-        return result
+            #main
+            main = "SELECT a.pid, a.name, a.unit, IFNULL(b.q2, 0), IFNULL(c.q3, 0), IFNULL(d.uprice, 'NA'), IFNULL(e.uprice, 'NA'), IFNULL(f.q6, 0) \
+            FROM ((((({}) a LEFT OUTER JOIN ({}) b USING (pid)) LEFT OUTER JOIN ({}) c \
+            USING (pid)) LEFT OUTER JOIN ({}) d USING (pid)) LEFT OUTER JOIN ({}) e USING (pid)) \
+            LEFT OUTER JOIN ({}) f USING (pid);".format(q1, q2, q3, q4, q5, q6)
+
+            self.cursor.execute(main)
+            return self.cursor.fetchall()
 
 
-    def product_details(self, product_id):
+    def product_details(self, product_id):                                      #NOTE THIS IS SLIGHTLY WRONG
 
         '''
         Takes in a product ID and returns the details of that product. the
