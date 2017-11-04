@@ -317,7 +317,7 @@ class access:
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
         cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup}
         while True:
-            inp = raw_input(message)
+            inp = raw_input(message).rstrip()
             if inp in cMap.keys():
                 cMap[inp]()
             else:
