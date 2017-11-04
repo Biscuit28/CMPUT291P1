@@ -257,6 +257,7 @@ class access:
                 break
         for attempt in range(3):
             # Use Raw input here (dont use get_input function)
+            print("Login Attempts Remaining: [{}]".format(2-attempt))
             username = str(raw_input("-->Username: ").lower()).rstrip()
             #password = str(raw_input("-->Password: "))
             password = getpass.getpass("-->Password: ")
