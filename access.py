@@ -215,11 +215,8 @@ class access:
         '''
         # Argument: pid (assume pid exists)
         # returns:
-        #    a list pd which follows the form, None is placed in query position if nothing comes back
-        #    example pd = [u'p9', u'300ml dishwashing liquid', u'ea', 1, 6.0, 1, 6.0, None]
-        #    None in postion 7 because no orders within past 7 days
-        #    [u'p10', u'400ml canned beef ravioli', u'ea', None, None, None]
-        #    first None represent no stores carry/no min price, etc
+        #    a list which follows the indexing [0, 1, 2, 3, 5, 4, 6, 7] using guide above
+        #    there is no god
         pd = []
         # 0, 1, 2
         q1 = "SELECT prd.pid, prd.name, prd.unit FROM products prd \
@@ -243,7 +240,11 @@ class access:
             qr = self.cursor.fetchone() # should work as fetch one aswell
 
             if qr == None:
-                pd.append(None)
+                if q != q4:
+                    pd.append(0)
+                    pd.append(None)
+                else:
+                    pd.append(0)
 
             else:
                 for el in qr:
@@ -363,6 +364,14 @@ class access:
             self.create_account()
             return uiTest()
 
+    # def inp_selectItem(self):
+    #     user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+    #     while user_inp not in ['y', 'n']:
+    #         user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+    #
+    #     if user_inp == 'y':
+    #         pid = self.get_input("Enter PID of item: ")
+    #         self.more_product_details(pid)
 
     def get_input(self, message):
         # Function to use when getting input from user
@@ -371,7 +380,7 @@ class access:
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
         cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup}
         while True:
-            inp = raw_input(message).rstrip()
+            inp = raw_input(message).rstrip().lower()
             if inp in cMap.keys():
                 cMap[inp]()
             else:
@@ -388,7 +397,7 @@ class access:
         # Return:
         # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
         count = 0
-        #FUCKproduct_details(product_id)
+        #product_details(product_id)
         for prod in results:
             print(prod)
             pd = self.product_details(prod)
@@ -404,7 +413,7 @@ class access:
                     more = get_input("Show more? y/n: ")
                     if (more == 'n'):
                         break
-                print ("|PID|NAME|UNIT|NUM_OF_STORES|")
+                print ("|PID|NAME|UNIT|NUM_OF_STORES|IN_STOCK|MIN_PRICE|MIN_PRICE_IS")
 
                 '''
                 For each matching product, list the product id, name, unit, the
@@ -418,6 +427,14 @@ class access:
                 # print(t2)
             print(pd)
             count += 1
+
+        user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+        while user_inp not in ['y', 'n']:
+            user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+
+        if user_inp == 'y':
+            pid = self.get_input("Enter PID of item: ")
+            self.more_product_details(pid)
 
 
     def ui_Home(self):
