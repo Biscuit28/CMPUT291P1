@@ -262,6 +262,7 @@ def product_details(self, product_id):
                 break
         for attempt in range(3):
             # Use Raw input here (dont use get_input function)
+            print("Login Attempts Remaining: [{}]".format(2-attempt))
             username = str(raw_input("-->Username: ").lower()).rstrip()
             #password = str(raw_input("-->Password: "))
             password = getpass.getpass("-->Password: ")
@@ -273,7 +274,7 @@ def product_details(self, product_id):
 
     def inp_help(self):
         print("commands can be used on any line that does not have an arrow (-->)")
-        commands = ["--help", "--search", "--quit"]
+        commands = ["--help", "--quit", "--search", "--login", "--logout", "--signup"]
         for command in commands:
             print(command)
 
@@ -292,22 +293,37 @@ def product_details(self, product_id):
         else:
             print ("Please log in as customer to use search feature.")
 
+    def inp_login(self):
+        # login
+        verified = self.ui_Login()
+        if (verified == False):
+            print "Max attempts reached, please try again later!"
+            raise SystemExit
+        self.user_typ = 1
+        return verified
 
+    def inp_logout(self):
+        self.user_typ = -1
+        return uiTest()
 
-    # def inp_logout(self):
-    #     # logout doesnt really log user out, it basically just retarts program
-    #     # which means user can logout technically before even logging in lol
-    #     # maybe change later --> if not verified say "cant logout before logged in"
-    #     return uiTest()
+    def inp_signup(self):
+
+        if (self.user_typ != -1):
+            print ("Please logout before making new account")
+
+        else:
+            self.create_account()
+            return uiTest()
+
 
     def get_input(self, message):
         # Function to use when getting input from user
         # checks is input is a command from user, if not, return output as is
         # output will always be string so if we want to return other type, must check and change (eg int)
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
-        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search}
+        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup}
         while True:
-            inp = raw_input(message)
+            inp = raw_input(message).rstrip()
             if inp in cMap.keys():
                 cMap[inp]()
             else:
@@ -376,49 +392,10 @@ def product_details(self, product_id):
 def uiTest():
     a = access()
 
-    ###########################################################################
-    # HOME SCREEN
-    ###########################################################################
-    # print("Welcome to access.py, type --help for list of commands")
-    # print("press Enter key")
-    # raw_input()
-    # usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
-    # while (usr_inp not in [0, 1]):
-    #     usr_inp = a.get_input("Type 1 to login, 0 to sign up: ")
-    # if (usr_inp == 0):
-    #     # Create user
-    #     a.create_account()
-    #     return uiTest()
-    # elif (usr_inp == 1):
-    #     # login
-    #     verified = a.ui_Login()
-    #     if (verified == False):
-    #         print "Max attempts reached, please try again later!"
-    #         raise SystemExit
-    #
-    #     user_typ = verified[1]
-    #     username = verified[2]
-    verified_user = a.ui_Home()
-    user_typ = verified_user[1]
-    username = verified_user[2]
-    ###########################################################################
+    while True:
+        a.get_input("MP1: ")
 
-        #print ("user {} is verified with type {}").format(username, user_typ)
-
-        # user verified
-    if (user_typ == 1):
-        # customer --> give customer priviliges
-        a.user_typ = 1
-        userC = customer(username)      # make customer object
-
-        while True:
-            a.get_input("MP1: ")
-            # searchInput = a.get_input("Searchbar: ")
-            # searchInput = searchInput.split()
-            # r= a.search(searchInput)
-            # a.display_search_results(r)
 
 if __name__ == "__main__":
-
 
     uiTest()
