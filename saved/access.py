@@ -75,7 +75,7 @@ class access:
             return (False, "username password combo is wrong")
 
 
-    def search(self, keywords):
+    def search(self, keywords):                                                 #NOTE there is a issue if the user enters an empty string
 
         '''
         Querys items based on keywords, assumes keywords is a list
@@ -84,15 +84,23 @@ class access:
         Returns: sorted product_ids (list)
         '''
         products = defaultdict(int)
-        for word in keywords:
-            SQL = "SELECT * FROM products WHERE name LIKE '%{}%';".format(word)
+        if keywords==[]:
+            SQL="SELECT * FROM products;"
             self.cursor.execute(SQL)
-            results=self.cursor.fetchall()
-            for result in results:
-                if result[0] not in products:
-                    products[result[0]] = 1
-                else:
-                    products[result[0]] += 1
+            ret_list=[]
+            for x in self.cursor.fetchall():
+                ret_list.append(x[0])
+            return ret_list
+        else:
+            for word in keywords:
+                SQL = "SELECT * FROM products WHERE name LIKE '%{}%';".format(word)
+                self.cursor.execute(SQL)
+                results=self.cursor.fetchall()
+                for result in results:
+                    if result[0] not in products:
+                        products[result[0]] = 1
+                    else:
+                        products[result[0]] += 1
         return sorted(products, key=products.get, reverse=True)
 
 
@@ -130,17 +138,18 @@ class access:
         WHERE"+cond[:-2]+" AND crr.qty > 0 GROUP BY prd.pid"
 
         #query 4 - the minimum price among the stores that carry it
-        q4 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid)"
+        q4 = "SELECT prd.pid, MIN(crr.uprice) AS uprice FROM products prd, carries crr ON prd.pid=crr.pid \
+        WHERE" +cond[:-2] + " GROUP BY crr.pid"
 
         #query 5 - the minimum price among the stores that have the product in stock
-        q5 = "SELECT prd.pid, crr.uprice FROM products prd, carries crr ON prd.pid=crr.pid \
-        WHERE" +cond[:-2] + " AND crr.uprice = (SELECT MIN(crr2.uprice) FROM carries crr2 WHERE crr.pid=crr2.pid AND crr.qty > 0)"
+        q5 = "SELECT prd.pid, MIN(crr.uprice) AS uprice FROM products prd, carries crr ON prd.pid=crr.pid \
+        WHERE" +cond[:-2] + " GROUP BY crr.pid HAVING crr.qty>0"
 
         #query 6 - the number of orders within the past 7 days ??
         q6 = "SELECT oln.pid, COUNT(oln.oid) AS q6 FROM orders ord, olines oln ON ord.oid=oln.oid \
         WHERE ord.odate BETWEEN DATETIME('now') AND DATETIME('now', '-7 day') AND" +cond2[:-2]+" GROUP BY oln.pid"
         #print q6
+
         #main
         main = "SELECT a.pid, a.name, a.unit, IFNULL(b.q2, 0), IFNULL(c.q3, 0), IFNULL(d.uprice, 'NA'), IFNULL(e.uprice, 'NA'), IFNULL(f.q6, 0) \
         FROM ((((({}) a LEFT OUTER JOIN ({}) b USING (pid)) LEFT OUTER JOIN ({}) c \
@@ -174,11 +183,15 @@ class access:
         self.cursor.execute(SQL)
         t1 = self.cursor.fetchall()
 
-        SQL = "SELECT str.sid, str.name, crr.uprice, crr.qty, SUM(oln.qty) \
-        FROM products prd, carries crr, stores str, olines oln, orders ord ON prd.pid=crr.pid \
-        AND str.sid=crr.sid AND oln.sid=str.sid AND ord.oid=oln.oid WHERE prd.pid='{}' \
-        AND 14>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY str.sid ORDER BY crr.qty > 0, crr.uprice ASC;".format(product_id)
-        #NOTE above query could be wrong
+        q1 = "SELECT str.sid, str.name, crr.uprice, crr.qty \
+        FROM products prd, carries crr, stores str ON prd.pid=crr.pid \
+        AND str.sid=crr.sid WHERE prd.pid='{}'".format(product_id)
+
+        q2="SELECT oln.sid, SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
+        WHERE oln.pid='{}' AND 7>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY oln.sid".format(product_id)
+
+        SQL="SELECT a.sid, a.name, a.uprice, a.qty,IFNULL(b.tot, 0) FROM ({}) a \
+        LEFT OUTER JOIN ({}) b USING (sid) ORDER BY a.qty > 0, a.uprice ASC;".format(q1, q2)
 
         self.cursor.execute(SQL)
         t2 = self.cursor.fetchall()
@@ -189,14 +202,15 @@ class access:
 
 if __name__ == "__main__":
     a = access()
-    a.create_account("bobbymee", "45673111", "45673111", "2005 Hilliard Place NW")
+    # a.create_account("bobbymee", "45673111", "45673111", "2005 Hilliard Place NW")
     # a.login("bobbylee", "45673111", customer=False)
-    # r= a.search(["canned", "beef"])
+    # r= a.search(["e"])
     # x = a.get_products(r)
     # for i in x:
     #     print i
-    # x2 = a.product_details('p30')
-    # for i in x2[0]:
-    #     print i
-    # for i in x2[1]:
-    #     print i
+    x2 = a.product_details('p3')
+    for i in x2[0]:
+        print i
+    print "store details"
+    for i in x2[1]:
+        print i

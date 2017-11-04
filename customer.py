@@ -57,7 +57,7 @@ class customer:
         if cart_key in self.cart:
             self.cart[cart_key][0]+=qty
             self.cart[cart_key][1]=result[0]
-            self.cart[cart_key][2]=qty*result[0]
+            self.cart[cart_key][2]=self.cart[cart_key][0]*result[0]
         else:
             self.cart[cart_key]=[qty, result[0], qty*result[0]]
         return success
