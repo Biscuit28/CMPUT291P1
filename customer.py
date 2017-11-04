@@ -78,7 +78,7 @@ class customer:
             print "product and store combo does not exist in cart"
             return False
         else:
-            if qty>=self.cart[cart_key] or ALL:
+            if qty>=self.cart[cart_key][0] or ALL:
                 self.cart.pop(cart_key)
                 print "item completely removed from cart"
             else:

@@ -3,7 +3,11 @@ import sys
 import access
 import getpass
 from customer import customer
+from agent import agent
 from collections import defaultdict
+
+#global AGENT
+#global CUSTOMER
 
 class access:
     '''
@@ -15,6 +19,7 @@ class access:
          self.conn = sqlite3.connect("./database.db") #connection to move database
          self.cursor = self.conn.cursor()
          self.user_typ = -1
+         self.user = None
 
 
     def create_account(self):
@@ -112,8 +117,16 @@ class access:
             #password = str(raw_input("Password: "))
         if user_typ == 1:
             self.cursor.execute("SELECT * FROM customers WHERE name=? AND pwd=?", (username, password))
+            # try:
+            #     CUSTOMER
+            # except:
+            #     CUSTOMER = customer(username)
         elif user_typ == 0:
             self.cursor.execute("SELECT * FROM agents WHERE name=? AND pwd=?", (username, password))
+            # try:
+            #     AGENT
+            # except:
+            #     AGENT = agent(username)
 
         if self.cursor.fetchone() != None:
             print "Logged in!"
@@ -344,25 +357,30 @@ class access:
 
     def inp_login(self):
         # login
+        if (self.user_typ != -1):
+            print("Please logout first with --logout")
+            return
         verified = self.ui_Login()
         if (verified == False):
             print "Max attempts reached, please try again later!"
             raise SystemExit
-        self.user_typ = 1
+        self.user_typ = verified[1]
+        if self.user_typ == 1:
+                #CUSTOMER = customer(verified[2])
+                self.user = customer(verified[2])
+        elif self.user_typ == 0:
+                #AGENT = agent(verified[2])
+                self.user = agent(verified[2])
         return verified
-<<<<<<< HEAD
 
     def inp_logout(self):
         self.user_typ = -1
+        # wipe
+        # CUSTOMER = None
+        # AGENT = None
+        self.user = None
         return uiTest()
 
-=======
-
-    def inp_logout(self):
-        self.user_typ = -1
-        return uiTest()
-
->>>>>>> master
     def inp_signup(self):
 
         if (self.user_typ != -1):
@@ -371,6 +389,62 @@ class access:
         else:
             self.create_account()
             return uiTest()
+    def inp_cartDetails(self):
+        # if not customer
+        if (self.user_typ != 1):
+            return
+        options = ['b', '0', '1', '2', '3']
+        # cart_keys = ((self.user).cart).keys()
+        # num_items = len(cart_keys)
+        # print("CART: ")
+        # CUSTOMER.cart
+        # print("CART TOTAL")
+        # CUSTOMER.get_cart_total()
+
+        print("------------------ CART VIEW ------------------")
+        print("<<<OPTIONS>>>")
+        print("GO BACK --------- TYPE b --")
+        print("SEE CART--------- TYPE 0 --")
+        print("SEE CART TOTAL--- TYPE 1 --")
+        print("ADJUST QUANTITY-- TYPE 2 --")
+        print("DEL FROM CART---- TYPE 3 --")
+        print("")
+
+        while True:
+            cart_keys = ((self.user).cart).keys()
+            num_items = len(cart_keys)
+
+            inp = None
+            while inp not in options:
+                inp = raw_input("-->Type Option: ")
+
+            if (inp == 'b'):
+                return
+
+            if (inp == '0'):
+                print("CART: ")
+                print((self.user).cart)
+                print(((self.user).cart).keys())
+            if (inp == '1'):
+                print("CART TOTAL")
+                total = (self.user).get_cart_total()
+                print("${}".format(total))
+
+            if (inp == '2'):
+                #inp = raw_input("-->Type : ")
+                # delete_from_cart(self, product_id, store_id, qty, ALL=False)
+                pid = raw_input("-->Type PID of item to delete --------: ")
+                sid = int(raw_input("-->Type SID of store to delete from --: "))
+                qty = int(raw_input("-->Type QTY you wish to delete --: "))
+                (self.user).delete_from_cart(pid, sid, qty, ALL=False)
+
+            if (inp == '3'):
+                #inp = raw_input("-->Type : ")
+                # delete_from_cart(self, product_id, store_id, qty, ALL=False)
+                pid = raw_input("-->Type PID of item to delete --------: ")
+                sid = int(raw_input("-->Type SID of store to delete from --: "))
+                (self.user).delete_from_cart(pid, sid, 0, ALL=True)
+
 
     # def inp_selectItem(self):
     #     user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
@@ -386,7 +460,7 @@ class access:
         # checks is input is a command from user, if not, return output as is
         # output will always be string so if we want to return other type, must check and change (eg int)
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
-        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup}
+        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup, "--cart":self.inp_cartDetails}
         while True:
             inp = raw_input(message).rstrip().lower()
             if inp in cMap.keys():
@@ -396,6 +470,16 @@ class access:
         if (inp.isdigit()):
             inp = int(inp)
         return inp
+
+    def display_more_details(self, pid):
+        t1, t2 = self.more_product_details(pid)
+        print("|PID|NAME|UNIT|CATEGORY|")
+        print(t1)
+        if (len(t2) > 0):
+            print("|SID|STORE NAME|LOWEST PRICE|QUANTITY IN STOCK|ORDERS IN LAST 7 DAYS|")
+            for store in t2:
+                print(store)
+
 
     def display_search_results(self, results):
         # (Not finished yet)
@@ -421,7 +505,7 @@ class access:
                     more = get_input("Show more? y/n: ")
                     if (more == 'n'):
                         break
-                print ("|PID|NAME|UNIT|NUM_OF_STORES|IN_STOCK|MIN_PRICE|MIN_PRICE_IS")
+                print ("|PID|NAME|UNIT|NUM_OF_STORES|MIN_PRICE|IN_STOCK|MIN_PRICE_IS|LAST 7 DAYS")
 
                 '''
                 For each matching product, list the product id, name, unit, the
@@ -442,7 +526,34 @@ class access:
 
         if user_inp == 'y':
             pid = self.get_input("Enter PID of item: ")
-            self.more_product_details(pid)
+            # Returns: (product detial (list), store info (list))
+            self.display_more_details(pid)
+            # t1, t2 = self.more_product_details(pid)
+            # print(t1)
+            # print(t2)
+            # if (len(t2) == 0):
+            #     print("Sorry, no store carries this product")
+            #     return
+
+            # Add to cart option
+            # if (pd[5] == 0):
+            #     print("Sorry, no store carries this product.")
+            #     return
+            user_inp = self.get_input("Would you like to add to car? y/n: ")
+            while user_inp not in ['y', 'n']:
+                user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+
+            if user_inp == 'y':
+                if (pd[5] == 0):
+                    print("Sorry, no store carries this product.")
+                    return
+                # add_to_cart(self, product_id, store_id, qty)
+                pid = raw_input("-->Enter PID of item: ")
+                sid = int(raw_input("-->Enter SID of store: "))
+                qty = int(raw_input("-->Enter QTY of item: "))
+                (self.user).add_to_cart(pid, sid, qty)
+
+
 
 
     def ui_Home(self):
@@ -470,10 +581,13 @@ class access:
 
 def uiTest():
     a = access()
-
+    #global USERNAME
+    # global AGENT
+    # global CUSTOMER
+    #CUSTOMER = None
     while True:
         a.get_input("MP1: ")
-
+        print(a.user)
 
 if __name__ == "__main__":
 
