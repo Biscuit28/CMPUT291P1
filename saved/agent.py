@@ -24,6 +24,37 @@ class agent:
             print "WARNING - agent {} does not exist".format(agent)
 
 
+    def view_orders(self):
+
+        '''
+        Function returns orders and deliveries for the agent
+
+        Args: None
+        Returns: (t1 (list)(tuple), t2 (list)(tuple))
+        '''
+        SQL="SELECT * FROM orders;"
+        self.cursor.execute(SQL)
+        t1=self.cursor.fetchall()
+
+        SQL="SELECT * FROM deliveries;"
+        self.cursor.execute(SQL)
+        t2=self.cursor.fetchall()
+        return (t1, t2)
+
+
+    def view_carries(self):
+
+        '''
+        Function returns the carries table
+
+        Args: None
+        Returns: carries (list)(tuple)
+        '''
+        SQL="SELECT * FROM carries;"
+        self.cursor.execute(SQL)
+        return self.cursor.fetchall()
+
+
     def set_delivery(self, orders, pickUpTime=None):
 
         '''

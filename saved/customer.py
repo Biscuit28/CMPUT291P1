@@ -51,7 +51,7 @@ class customer:
         if cart_key in self.cart:
             self.cart[cart_key][0]+=qty
             self.cart[cart_key][1]=result[0]
-            self.cart[cart_key][2]=qty*result[0]
+            self.cart[cart_key][2]=self.cart[cart_key][0]*result[0]
         else:
             self.cart[cart_key]=[qty, result[0], qty*result[0]]
         return success
@@ -148,7 +148,6 @@ class customer:
             self.cursor.execute("INSERT INTO orders (oid, cid, odate, address) \
             VALUES (?, ?, ?, ?);", (order_id, self.id, datetime.today().strftime('%Y-%m-%d'), self.address))
             for k in self.cart.keys():
-                print c.cart
                 data=self.cart[k]
                 ps_id=k.split('*')
                 #update quatnity in carries
@@ -156,6 +155,8 @@ class customer:
                 #add new olines to ord
                 self.cursor.execute("INSERT INTO olines (oid, sid, pid, qty, uprice) \
                 VALUES (?, ?, ?, ?, ?);", (order_id, ps_id[1], ps_id[0], data[0], data[1]))
+
+            #need to add to deliveries too
             #reset the cart and commit changes
             self.conn.commit()
             self.cart=dict()
