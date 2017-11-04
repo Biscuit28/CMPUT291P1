@@ -200,48 +200,96 @@ class access:
             self.cursor.execute(main)
             return self.cursor.fetchall()
 
+    def product_details(self, product_id):
+        '''
+        For each matching product, list the:
+        0.) product id
+        1.) name
+        2.) unit,
+        3.) the number of stores that carry it,
+        4.) the number of stores that have it in stock,
+        5.) the minimum price among the stores that carry it,
 
-def product_details(self, product_id):
+        6.) the minimum price among the stores that have the product in stock,
+        7.) and the number of orders within the past 7 days.
+        '''
+        # Argument: pid (assume pid exists)
+        # returns:
+        #    a list pd which follows the form, None is placed in query position if nothing comes back
+        #    example pd = [u'p9', u'300ml dishwashing liquid', u'ea', 1, 6.0, 1, 6.0, None]
+        #    None in postion 7 because no orders within past 7 days
+        #    [u'p10', u'400ml canned beef ravioli', u'ea', None, None, None]
+        #    first None represent no stores carry/no min price, etc
+        pd = []
+        # 0, 1, 2
+        q1 = "SELECT prd.pid, prd.name, prd.unit FROM products prd \
+        WHERE prd.pid = '{}';".format(product_id)
 
-    '''
-    Takes in a product ID and returns the details of that product. the
-    details returned should adhere to the following specification
+        # 3, 5
+        q2 = "SELECT count(pid), min(uprice) FROM carries WHERE pid = '{}' \
+        GROUP BY pid".format(product_id)
 
-    product id, name, unit, category and a listing of all stores that carry
-    the product with their prices, quantities in stock and the number of orders
-    within the past 7 days. If a product is carried by more than one store,
-    the result should be ordered as follows:
+        # 4, 6
+        q3 = "SELECT count(pid), min(uprice) FROM carries WHERE \
+        pid = '{}' AND qty <> 0 GROUP BY pid".format(product_id)
 
-    (1) the stores that have the product in stock will be listed before those that don't;
+        # 7
+        q4="SELECT oln.sid, SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
+        WHERE oln.pid='{}' AND 7>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY oln.sid".format(product_id)
 
-    (2) the stores in each case will be sorted based on the store price (from lowest to highest).
+        queries = [q1, q2, q3, q4]
+        for q in queries:
+            self.cursor.execute(q)
+            qr = self.cursor.fetchone() # should work as fetch one aswell
 
-    Args: product_id (str)
-    Returns: (product detial (list), store info (list))
-    '''
-    SQL = "SELECT prd.pid, prd.name, prd.unit, prd.cat FROM products prd \
-    WHERE prd.pid = '{}';".format(product_id)
-    self.cursor.execute(SQL)
-    t1 = self.cursor.fetchall()
+            if qr == None:
+                pd.append(None)
 
-    q1 = "SELECT str.sid, str.name, crr.uprice, crr.qty \
-    FROM products prd, carries crr, stores str ON prd.pid=crr.pid \
-    AND str.sid=crr.sid WHERE prd.pid='{}'".format(product_id)
-
-    q2="SELECT oln.sid, SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
-    WHERE oln.pid='{}' AND 7>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY oln.sid".format(product_id)
-
-    SQL="SELECT a.sid, a.name, a.uprice, a.qty,IFNULL(b.tot, 0) FROM ({}) a \
-    LEFT OUTER JOIN ({}) b USING (sid) ORDER BY a.qty > 0, a.uprice ASC;".format(q1, q2)
-
-    self.cursor.execute(SQL)
-    t2 = self.cursor.fetchall()
-    return (t1, t2)
+            else:
+                for el in qr:
+                    pd.append(el)
+        return pd
 
 
 
 
-        return
+    def more_product_details(self, product_id):
+
+        '''
+        Takes in a product ID and returns the details of that product. the
+        details returned should adhere to the following specification
+
+        product id, name, unit, category and a listing of all stores that carry
+        the product with their prices, quantities in stock and the number of orders
+        within the past 7 days. If a product is carried by more than one store,
+        the result should be ordered as follows:
+
+        (1) the stores that have the product in stock will be listed before those that don't;
+
+        (2) the stores in each case will be sorted based on the store price (from lowest to highest).
+
+        Args: product_id (str)
+        Returns: (product detial (list), store info (list))
+        '''
+        SQL = "SELECT prd.pid, prd.name, prd.unit, prd.cat FROM products prd \
+        WHERE prd.pid = '{}';".format(product_id)
+        self.cursor.execute(SQL)
+        t1 = self.cursor.fetchall()
+
+        q1 = "SELECT str.sid, str.name, crr.uprice, crr.qty \
+        FROM products prd, carries crr, stores str ON prd.pid=crr.pid \
+        AND str.sid=crr.sid WHERE prd.pid='{}'".format(product_id)
+
+        q2="SELECT oln.sid, SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
+        WHERE oln.pid='{}' AND 7>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY oln.sid".format(product_id)
+
+        SQL="SELECT a.sid, a.name, a.uprice, a.qty,IFNULL(b.tot, 0) FROM ({}) a \
+        LEFT OUTER JOIN ({}) b USING (sid) ORDER BY a.qty > 0, a.uprice ASC;".format(q1, q2)
+
+        self.cursor.execute(SQL)
+        t2 = self.cursor.fetchall()
+        #print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
+        return (t1, t2)
 
     def make_customer(self, username):
             self.cursor.execute("SELECT * FROM customers WHERE name=?", username)
@@ -340,20 +388,23 @@ def product_details(self, product_id):
         # Return:
         # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
         count = 0
+        #FUCKproduct_details(product_id)
         for prod in results:
+            print(prod)
+            pd = self.product_details(prod)
             # t1 layout: for each product (pid, name, unit, cat)
             # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
             # t2 query doesnt fully work I dont think
             # doesnt give proper num of orders
-            t1, t2 = self.product_details(prod)
-            if len(t2) > 0:             # only display products that are carried by a store
+            #t1, t2 = self.more_product_details(prod)
+        #####if len(t2) > 0:             # only display products that are carried by a store
                                         # maybe check that store qty != 0 too
-                if ((count % 5) == 0):
-                    if (count != 0):
-                        more = get_input("Show more? y/n: ")
-                        if (more == 'n'):
-                            break
-                    print ("|PID|NAME|UNIT|NUM_OF_STORES|")
+            if ((count % 5) == 0):
+                if (count != 0):
+                    more = get_input("Show more? y/n: ")
+                    if (more == 'n'):
+                        break
+                print ("|PID|NAME|UNIT|NUM_OF_STORES|")
 
                 '''
                 For each matching product, list the product id, name, unit, the
@@ -362,8 +413,11 @@ def product_details(self, product_id):
                 the minimum price among the stores that have the product in stock,
                 and the number of orders within the past 7 days.
                 '''
-                print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
-                count += 1
+                #print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
+                # print(t1)
+                # print(t2)
+            print(pd)
+            count += 1
 
 
     def ui_Home(self):
