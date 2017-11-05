@@ -344,9 +344,26 @@ class access:
         print("---------------- HELP MENU --------------------")
         print("")
         print("commands can be used on any line that does not have an arrow (-->)")
-        commands = ["--help", "--quit", "--search", "--login", "--logout", "--signup", "--cart"]
-        for command in commands:
+        universal = ["--help", "--quit", "--login", "--logout", "--signup"]
+        cu_coms = ["--search", "--cart"]
+        ag_coms = ["--admin"]
+
+        for command in universal:
             print(command)
+
+        if self.user_typ == 1:
+            print("")
+
+
+            for cu_com in cu_coms:
+                print(cu_com)
+
+        if self.user_typ == 0:
+            print("")
+            print("<<<<AGENT COMMANDS>>>>")
+            for ag_com in ag_coms:
+                print(ag_com)
+
         print("")
 
     def inp_quit(self):
@@ -499,22 +516,78 @@ class access:
                 for order in history:
                     print(order)
 
+    def inp_adminFunctions(self):
 
-    # def inp_selectItem(self):
-    #     user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
-    #     while user_inp not in ['y', 'n']:
-    #         user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
-    #
-    #     if user_inp == 'y':
-    #         pid = self.get_input("Enter PID of item: ")
-    #         self.more_product_details(pid)
+        if (self.user_typ != 0):
+            print("here")
+            return
+
+        options = ['S', 'U', 'A', 'B']
+
+        print("")
+        print("------------------- ADMIN ---------------------")
+        print("LOGGED IN AS AGENT: {}".format((self.user).name))
+        print("-----------------------------------------------")
+        print("")
+        print("<<<<<<<<<<<OPTIONS>>>>>>>>>>>")
+        print(">GO BACK----------------- TYPE B --")
+        print(">SET DELIVERY------------ TYPE S ---")
+        print(">UPDATE DELIVERY--------- TYPE U ---")
+        print(">ADD TO STOCK------------ TYPE A ---")
+
+        while True:
+            print("")
+            # cart_keys = ((self.user).cart).keys()
+            # num_items = len(cart_keys)
+
+            inp = None
+            while inp not in options:
+                inp = raw_input("-->Type Option: ")
+
+            if (inp == 'B'):
+                print("---------------- END ADMIN VIEW ----------------")
+                print("")
+                return
+
+            if (inp == 'A'):
+                # Add to stock
+                pid = raw_input("-->--> PID: ")
+                sid = int(raw_input("-->--> SID: "))
+
+                # Check that pid and sid that agent typed is exists
+                SQL="SELECT crr.uprice, crr.qty FROM carries crr WHERE crr.pid='{}' AND crr.sid='{}';".format(pid, sid)
+                self.cursor.execute(SQL)
+                result=self.cursor.fetchone()
+                if result == None:
+                    print "-->-->PRODUCT {} DOES NOT EXIT IN STORE {}".format(pid, sid)
+
+                else:
+                    try:
+                        qty = int(raw_input("-->--> ADD QTY (press enter to skip): "))
+                    except ValueError:
+                        qty = None
+                    try:
+                        uprice = float(raw_input("-->--> NEW PRICE (press enter to skip): "))
+                    except ValueError:
+                        uprice = None
+
+                    update = (self.user).update_stock(pid, sid, qty, uprice)
+                    if update == True:
+                        print("STOCK UPDATE ---- SUCCESSFUL")
+                    else:
+                        print("STOCK UPDATE ---- UNSUCCESSFUL")
+
+
+
+
+
 
     def get_input(self, message):
         # Function to use when getting input from user
         # checks is input is a command from user, if not, return output as is
         # output will always be string so if we want to return other type, must check and change (eg int)
         #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
-        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup, "--cart":self.inp_cartDetails}
+        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup, "--cart":self.inp_cartDetails, "--admin":self.inp_adminFunctions}
         while True:
             inp = raw_input(message).rstrip().lower()
             if inp in cMap.keys():
@@ -654,7 +727,7 @@ class access:
 
 def uiTest():
     a = access()
-    #global USERNAME
+    # global USERNAME
     # global AGENT
     # global CUSTOMER
     #CUSTOMER = None
