@@ -244,7 +244,7 @@ class access:
         pid = '{}' AND qty <> 0 GROUP BY pid".format(product_id)
 
         # 7
-        q4="SELECT oln.sid, SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
+        q4="SELECT SUM(oln.qty) AS tot FROM olines oln, orders ord ON oln.oid=ord.oid \
         WHERE oln.pid='{}' AND 7>=JULIANDAY('now')-JULIANDAY(ord.odate) GROUP BY oln.sid".format(product_id)
 
         queries = [q1, q2, q3, q4]
@@ -315,6 +315,8 @@ class access:
     def ui_Login(self):
         # used function login, but formats nicely for ui
         # --> 3 attempts and checks user_typ is 1 or 0
+        print("------------------- LOGIN ---------------------")
+        print("")
         while (True):
             #user_typ = input("Type 1 for customer login or 0 for agent login: ")
             #print("Type 1 for customer login or 0 for agent login: ")
@@ -322,6 +324,7 @@ class access:
             user_typ = self.get_input("Type 1 for customer login or 0 for agent login: ")
             if (user_typ in [0,1]):
                 break
+        print("")
         for attempt in range(3):
             # Use Raw input here (dont use get_input function)
             print("Login Attempts Remaining: [{}]".format(2-attempt))
@@ -329,16 +332,22 @@ class access:
             #password = str(raw_input("-->Password: "))
             password = getpass.getpass("-->Password: ")
             verified = self.login(user_typ, username, password)[0]
+            print("")
             if (verified):
+                #print("")
                 return (True, user_typ, username)
+            #print("")
 
         return False
 
     def inp_help(self):
+        print("---------------- HELP MENU --------------------")
+        print("")
         print("commands can be used on any line that does not have an arrow (-->)")
-        commands = ["--help", "--quit", "--search", "--login", "--logout", "--signup"]
+        commands = ["--help", "--quit", "--search", "--login", "--logout", "--signup", "--cart"]
         for command in commands:
             print(command)
+        print("")
 
     def inp_quit(self):
         print("Have nice day!")
@@ -348,10 +357,17 @@ class access:
         # if user is customer
 
         if (self.user_typ == 1):
-            searchInput = self.get_input("Searchbar: ")
+            #print("-----------------------------------------------")
+            searchInput = self.get_input(">>>>>>>Searchbar: ")
+            #print("-----------------------------------------------")
+
             searchInput = searchInput.split()
             r= self.search(searchInput)
-            self.display_search_results(r)
+            if len(r) != 0:
+                print("")
+                self.display_search_results(r)
+            else:
+                print("No Match Results Found!")
         else:
             print ("Please log in as customer to use search feature.")
 
@@ -389,11 +405,12 @@ class access:
         else:
             self.create_account()
             return uiTest()
+
     def inp_cartDetails(self):
         # if not customer
         if (self.user_typ != 1):
             return
-        options = ['b', '0', '1', '2', '3']
+        options = ['b', '0', '1', '2', '3', 'p', 'h']
         # cart_keys = ((self.user).cart).keys()
         # num_items = len(cart_keys)
         # print("CART: ")
@@ -408,9 +425,12 @@ class access:
         print("SEE CART TOTAL--- TYPE 1 --")
         print("ADJUST QUANTITY-- TYPE 2 --")
         print("DEL FROM CART---- TYPE 3 --")
-        print("")
+        print("PLACE ORDER------ TYPE p --")
+        print("ODER HISTORY----- TYPE h --")
+        #print("")
 
         while True:
+            print("")
             cart_keys = ((self.user).cart).keys()
             num_items = len(cart_keys)
 
@@ -419,12 +439,14 @@ class access:
                 inp = raw_input("-->Type Option: ")
 
             if (inp == 'b'):
+                print("---------------- END CART VIEW ----------------")
+                print("")
                 return
 
             if (inp == '0'):
                 print("CART: ")
-                print((self.user).cart)
-                print(((self.user).cart).keys())
+                self.user.show_cart(detailed = True)
+                #print(((self.user).cart).keys())
             if (inp == '1'):
                 print("CART TOTAL")
                 total = (self.user).get_cart_total()
@@ -433,17 +455,49 @@ class access:
             if (inp == '2'):
                 #inp = raw_input("-->Type : ")
                 # delete_from_cart(self, product_id, store_id, qty, ALL=False)
-                pid = raw_input("-->Type PID of item to delete --------: ")
-                sid = int(raw_input("-->Type SID of store to delete from --: "))
-                qty = int(raw_input("-->Type QTY you wish to delete --: "))
-                (self.user).delete_from_cart(pid, sid, qty, ALL=False)
+                keys = self.user.show_cart()
+                k_inp = int(raw_input("-->-->ENTER ITEM NUMBER: "))
+                if (k_inp < len(keys)):
+                    key = keys[k_inp]
+                    key = key.split("*")
+                    pid = key[0]
+                    sid = key[1]
+                    qty = int(raw_input("-->-->Type QTY you wish to add (+ or - integer): "))
+                    qty = -1 * qty
+                    # pid = raw_input("-->Type PID of item to delete --------: ")
+                    # sid = int(raw_input("-->Type SID of store to delete from --: "))
+                    # qty = int(raw_input("-->Type QTY you wish to delete --: "))
+                    (self.user).delete_from_cart(pid, sid, qty, ALL=False)
+                else:
+                    print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
 
             if (inp == '3'):
                 #inp = raw_input("-->Type : ")
                 # delete_from_cart(self, product_id, store_id, qty, ALL=False)
-                pid = raw_input("-->Type PID of item to delete --------: ")
-                sid = int(raw_input("-->Type SID of store to delete from --: "))
-                (self.user).delete_from_cart(pid, sid, 0, ALL=True)
+                print("\nITEMS IN CART")
+                keys = self.user.show_cart()
+                k_inp = int(raw_input("\n-->-->ENTER ITEM NUMBER TO DELETE: "))
+                if (k_inp < len(keys)):
+                    key = keys[k_inp]
+                    key = key.split("*")
+                    pid = key[0]
+                    sid = key[1]
+                    # pid = raw_input("-->Type PID of item to delete --------: ")
+                    # sid = int(raw_input("-->Type SID of store to delete from --: "))
+                    # qty = int(raw_input("-->Type QTY you wish to delete --: "))
+                    (self.user).delete_from_cart(pid, sid, 0, ALL=True)
+                else:
+                    print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
+                # pid = raw_input("-->Type PID of item to delete --------: ")
+                # sid = int(raw_input("-->Type SID of store to delete from --: "))
+                # (self.user).delete_from_cart(pid, sid, 0, ALL=True)
+
+            if (inp == 'p'):
+                (self.user).confirm_order()
+            if (inp == 'h'):
+                history = (self.user).order_history()
+                for order in history:
+                    print(order)
 
 
     # def inp_selectItem(self):
@@ -473,15 +527,21 @@ class access:
 
     def display_more_details(self, pid):
         t1, t2 = self.more_product_details(pid)
+        count = 0
         print("|PID|NAME|UNIT|CATEGORY|")
-        print(t1)
+        print("|{}|{}|{}|{}|".format(*t1[0]))
         if (len(t2) > 0):
-            print("|SID|STORE NAME|LOWEST PRICE|QUANTITY IN STOCK|ORDERS IN LAST 7 DAYS|")
+            print("\n|SID|STORE NAME|LOWEST PRICE|QUANTITY IN STOCK|ORDERS IN LAST 7 DAYS|")
             for store in t2:
-                print(store)
+                #print(store)
+                print("STORE NUMBER ({}) ---- |{}|{}|{}|{}|{}|".format(count, *store))
+                count += 1
+        return t2
 
 
     def display_search_results(self, results):
+        print("--------------- SEARCH RESULTS ----------------")
+
         # (Not finished yet)
         # arguments:
         # --> results: list of pids
@@ -491,7 +551,7 @@ class access:
         count = 0
         #product_details(product_id)
         for prod in results:
-            print(prod)
+            #print(prod)
             pd = self.product_details(prod)
             # t1 layout: for each product (pid, name, unit, cat)
             # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
@@ -517,41 +577,54 @@ class access:
                 #print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
                 # print(t1)
                 # print(t2)
-            print(pd)
+            print("ITEM NUMBER ({}) ---- |{}|{}|{}|{}|{}|{}|{}|{}|".format(count, *pd))
+            #print(pd)
             count += 1
 
-        user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+        user_inp = self.get_input("\nWould you like to see more details on an item listed? y/n: ")
         while user_inp not in ['y', 'n']:
             user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
 
         if user_inp == 'y':
-            pid = self.get_input("Enter PID of item: ")
+        #####pid = self.get_input("Enter PID of item: ")
+            item_n = self.get_input("Enter ITEM NUMBER of item: ")
             # Returns: (product detial (list), store info (list))
-            self.display_more_details(pid)
+            pid = results[item_n]
+            print("")
+            print("-----------------------------------------------")
+            print("------------------ MORE INFO ------------------")
+            t2 = self.display_more_details(pid)
+            #t1, t2 = self.display_more_details(pid)
             # t1, t2 = self.more_product_details(pid)
             # print(t1)
             # print(t2)
-            # if (len(t2) == 0):
-            #     print("Sorry, no store carries this product")
-            #     return
 
             # Add to cart option
             # if (pd[5] == 0):
             #     print("Sorry, no store carries this product.")
             #     return
-            user_inp = self.get_input("Would you like to add to car? y/n: ")
+            user_inp = self.get_input("\nWould you like to add item to cart? y/n: ")
             while user_inp not in ['y', 'n']:
-                user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
+                user_inp = self.get_input("Would you like to add item to cart? y/n: ")
 
             if user_inp == 'y':
-                if (pd[5] == 0):
-                    print("Sorry, no store carries this product.")
+                #if (pd[5] == 0):
+                if (len(t2) == 0):
+                    print("Sorry, no store has this product in stock.")
+                    print("")
                     return
                 # add_to_cart(self, product_id, store_id, qty)
-                pid = raw_input("-->Enter PID of item: ")
-                sid = int(raw_input("-->Enter SID of store: "))
-                qty = int(raw_input("-->Enter QTY of item: "))
+                # pid = raw_input("-->Enter PID of item: ")
+                # sid = int(raw_input("-->Enter SID of store: "))
+
+                # pid has not changes --> leave
+                # sid --> picked by user
+                s_num = int(raw_input("-->Enter STORE NUMBER of store to order from: "))
+                sid = t2[s_num][0]
+                #qty = int(raw_input("-->Enter QTY of item: "))
+                qty = 1 # DEFAULT IS 1
                 (self.user).add_to_cart(pid, sid, qty)
+                print("")
 
 
 

@@ -29,6 +29,24 @@ class customer:
         self.address = result[2]
         self.cart=dict()
 
+    def show_cart(self, detailed = False):
+        # also return keys so I can Index them in access.py
+        count = 0
+        keys = []
+
+        for key in self.cart:
+            keys.append(key)
+            moreInfo = (self.cart)[key]
+            qty = moreInfo[0]
+            ppu = moreInfo[1]
+            cst = moreInfo[2]
+            #print(moreInfoc)
+            if detailed == True:
+                print("ITEM NUMBER ({}) ---- PID*SID: {} ---- QTY: {} ---- PPU: {} ---- TOTAL COST: {}".format(count, key, qty, ppu, cst))
+            else:
+                print("ITEM NUMBER ({}) ---- {}: ".format(count, key))
+        return keys
+
 
 
 
@@ -67,7 +85,7 @@ class customer:
 
         '''
         Function takes a product and the store it is from and removes amount
-        defined by quantity in the cart. If Var arg all is set to true, it will
+        defined by quantity in the cart. If Var arg ALL is set to true, it will
         automatically remove the item completely from the cart
 
         Args: product_id (str), store_id (int), qty (int)
@@ -75,7 +93,7 @@ class customer:
         '''
         cart_key=product_id+'*'+str(store_id)
         if cart_key not in self.cart:
-            print "product and store combo does not exist in cart"
+            print "ERROR"
             return False
         else:
             if qty>=self.cart[cart_key][0] or ALL:
@@ -84,7 +102,7 @@ class customer:
             else:
                 self.cart[cart_key][0]-=qty
                 self.cart[cart_key][2]=(self.cart[cart_key][0]*self.cart[cart_key][1])
-                print "{} item(s) removed from cart".format(qty)
+                #print "{} item(s) removed from cart".format(qty)
             return True
 
 
@@ -154,7 +172,7 @@ class customer:
             self.cursor.execute("INSERT INTO orders (oid, cid, odate, address) \
             VALUES (?, ?, ?, ?);", (order_id, self.id, datetime.today().strftime('%Y-%m-%d'), self.address))
             for k in self.cart.keys():
-                print c.cart
+                #print self.cart
                 data=self.cart[k]
                 ps_id=k.split('*')
                 #update quatnity in carries
@@ -220,5 +238,5 @@ class customer:
 
 
 
-if __name__ == "__main__":
-    c=customer("davood")
+#if __name__ == "__main__":
+    #c=customer("davood")
