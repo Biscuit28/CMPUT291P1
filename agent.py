@@ -24,6 +24,46 @@ class agent:
             print "WARNING - agent {} does not exist".format(agent)
 
 
+    def view_orders(self):
+
+        '''
+        Function returns orders and deliveries for the agent
+
+        Args: None
+        Returns: (t1 (list)(tuple), t2 (list)(tuple))
+        '''
+        # SQL="SELECT * FROM orders;"
+        # self.cursor.execute(SQL)
+        # t1=self.cursor.fetchall()
+        #
+        # SQL="SELECT * FROM deliveries;"
+        # self.cursor.execute(SQL)
+        # t2=self.cursor.fetchall()
+
+        SQL="SELECT oid FROM orders;"
+        self.cursor.execute(SQL)
+        t1=self.cursor.fetchall()
+
+        SQL="SELECT oid FROM deliveries;"
+        self.cursor.execute(SQL)
+        t2=self.cursor.fetchall()
+
+        return (t1, t2)
+
+
+    def view_carries(self):
+
+        '''
+        Function returns the carries table
+
+        Args: None
+        Returns: carries (list)(tuple)
+        '''
+        SQL="SELECT * FROM carries;"
+        self.cursor.execute(SQL)
+        return self.cursor.fetchall()
+
+
     def set_delivery(self, orders, pickUpTime=None):
 
         '''
@@ -39,8 +79,12 @@ class agent:
         maxtrack=self.cursor.fetchone()
         trackingNo=maxtrack[0]+1
         for oid in orders:
-            self.cursor.execute("INSERT INTO deliveries (trackingNo, oid, pickUpTime, dropOffTime) \
-            VALUES (?, ?, ?, ?);", (trackingNo, oid, pickUpTime, None))
+            #oid = oid[0]
+            pickUpTime = raw_input("-->--> PICK UP TIME FOR ORDER {} (press enter for DEFAULT): ".format(oid)).strip() or None
+
+            # self.cursor.execute("INSERT INTO deliveries (trackingNo, oid, pickUpTime, dropOffTime) \
+            # VALUES (?, ?, ?, ?);", (trackingNo, oid, pickUpTime, None))
+            self.cursor.execute("INSERT INTO deliveries VALUES (?, ?, ?, ?);", (trackingNo, oid, pickUpTime, None))
         self.conn.commit()
         return True
 
@@ -127,6 +171,6 @@ class agent:
 
 
 
-if __name__ =="__main__":
-    a=agent("Joshua")
-    a.update_stock("p3", 1)
+# if __name__ =="__main__":
+#     a=agent("Joshua")
+#     a.update_stock("p3", 1)

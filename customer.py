@@ -45,6 +45,8 @@ class customer:
                 print("ITEM NUMBER ({}) ---- PID*SID: {} ---- QTY: {} ---- PPU: {} ---- TOTAL COST: {}".format(count, key, qty, ppu, cst))
             else:
                 print("ITEM NUMBER ({}) ---- {}: ".format(count, key))
+
+            count += 1
         return keys
 
 

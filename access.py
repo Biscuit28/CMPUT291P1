@@ -5,6 +5,7 @@ import getpass
 from customer import customer
 from agent import agent
 from collections import defaultdict
+import time
 
 #global AGENT
 #global CUSTOMER
@@ -367,7 +368,19 @@ class access:
         print("")
 
     def inp_quit(self):
+        print "logging out..."
+        for i in range(3):
+            print "|/\/\/\/\/\/\/\/|"
+            time.sleep(0.1)
+            print "|\/\/\/\/\/\/\/\|"
+            time.sleep(0.1)
+
+
+        print("-----------------------------------------------")
         print("Have nice day!")
+        print("-----------------------------------------------")
+        print("")
+        print("")
         raise SystemExit
 
     def inp_search(self):
@@ -575,15 +588,98 @@ class access:
                     if update == True:
                         print("STOCK UPDATE ---- SUCCESSFUL")
                     else:
-                        print("STOCK UPDATE ---- UNSUCCESSFUL")
+                        print("STOCK UPDATE ---- NOT SUCCESSFUL")
 
 
             if (inp == 'S'):
                 # Set delivery
-                print("orders")
-                print(self.user)
-                (self.user).view_orders()
+                all_orders, deliv_orders = (self.user).view_orders()
+                #print(orders)
+                #print(deliveries)
+                orders = []
+                for o in all_orders:
+                    if o not in deliv_orders:
+                        orders.append(o[0])
+                # print("orders needing delivery")
+                # for order in orders:
+                #     print(order[0])
 
+                #pickUpTime = raw_input("-->--> PICK UP TIME (press enter for DEFAULT): ").strip() or None
+                count = 0
+                print("")
+                print(">>>>ORDERS NOT IN DELIVERY>>>>")
+                for order in orders:
+                    print("ORDER ({}) ---- OID: {}".format(count, order))
+                    count += 1
+
+                print("")
+                print(">>>>TYPE A SPACE SEPARATED STRING OF OID's TO ADD TO A DELIVERY, OR PRESS ENTER TO GO BACK")
+                usr_inp = raw_input("-->--> OID STRING: ")
+                test = usr_inp.strip() or None
+                if (test != None):
+                    usr_inp = usr_inp.split()
+
+                    try:
+                        usr_inp = map(int, usr_inp)     # conver input string to list of ints
+                    except ValueError:
+                        print("ERROR: RETURNING TO HOME")
+                        return
+
+
+                    # CHECK that every input is valid
+                    flag = True
+                    for inp in usr_inp:
+                        inp = int(inp)
+                        if inp not in orders:
+                            print("INVALID: OID {} IS NOT IN ORDERS!".format(inp))
+                            flag = False
+
+                    if flag:
+                        success = (self.user).set_delivery(usr_inp, pickUpTime=None)
+                        if (success):
+                            print("DELIVERY SETUP ---- SUCCESSFUL")
+                        else:
+                            print("DELIVERY SETUP ---- NOT SUCCESSFUL")
+
+            if (inp == 'U'):
+                # Update delivery
+                oids = []
+                print("")
+                print(">>>>UPDATE DELIVERY>>>>")
+                print("")
+                try :
+                    trackingNo = int(raw_input("-->--> ENTER 'trackingNo': "))
+                except ValueError:
+                    print("ERROR: RETURNING TO HOME")
+                    return
+
+                count = 0
+                r = (self.user).view_delivery(trackingNo)
+                for order in r:
+                    oids.append(order[1])
+                    print("> INDEX ({}) ---- OID: {}".format(count, oids[count]))
+                    count += 1
+
+                print("")
+
+                try :
+                    index = int(raw_input("-->--> ENTER INDEX OF OID TO EDIT: "))
+                except ValueError:
+                    print("ERROR: RETURNING TO HOME")
+                    return
+
+                if index >= len(oids):
+                    print("INVALID: INDEX OUR OF RANGE!")
+                    return
+
+
+                pickUpTime = raw_input("-->--> ENTER NEW 'pickUpTime', PRESS ENTER FOR DEFAULT: ")
+                pickUpTime = pickUpTime.strip() or None
+
+                dropOffTime = raw_input("-->--> ENTER NEW 'dropOffTime', PRESS ENTER FOR DEFAULT: ")
+                dropOffTime = dropOffTime.strip() or None
+
+                (self.user).edit_delivery_order_time(trackingNo, oids[index], pickUpTime, dropOffTime)
 
 
 
@@ -630,6 +726,7 @@ class access:
         # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
         count = 0
         #product_details(product_id)
+        print(results)
         for prod in results:
             #print(prod)
             pd = self.product_details(prod)
@@ -740,7 +837,7 @@ def uiTest():
     #CUSTOMER = None
     while True:
         a.get_input("MP1: ")
-        print(a.user)
+        #print(a.user)
 
 if __name__ == "__main__":
 
