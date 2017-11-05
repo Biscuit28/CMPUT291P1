@@ -368,12 +368,16 @@ class access:
         print("")
 
     def inp_quit(self):
-        print "logging out..."
-        for i in range(3):
-            print "|/\/\/\/\/\/\/\/|"
-            time.sleep(0.1)
-            print "|\/\/\/\/\/\/\/\|"
-            time.sleep(0.1)
+
+        if (self.user_typ != -1):
+            self.inp_logout()
+            print "logging out..."
+            for i in range(3):
+                print "|/\/\/\/\/\/\/\/|"
+                time.sleep(0.1)
+                print "|\/\/\/\/\/\/\/\|"
+                time.sleep(0.1)
+
 
 
         print("-----------------------------------------------")
@@ -420,12 +424,15 @@ class access:
         return verified
 
     def inp_logout(self):
-        self.user_typ = -1
+        if self.user_typ == -1:
+            print("NOT LOGGED IN")
+        else:
+            self.user_typ = -1
         # wipe
         # CUSTOMER = None
         # AGENT = None
-        self.user = None
-        return uiTest()
+            self.user = None
+        #return uiTest()
 
     def inp_signup(self):
 
@@ -835,6 +842,10 @@ def uiTest():
     # global AGENT
     # global CUSTOMER
     #CUSTOMER = None
+    print("-----------------------------------------------")
+    print("-Mini Project 1--------------------------V1.0--")
+    print("-----------------------------------------------")
+    print("")
     while True:
         a.get_input("MP1: ")
         #print(a.user)
