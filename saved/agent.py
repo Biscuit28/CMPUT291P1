@@ -158,6 +158,6 @@ class agent:
 
 
 
-if __name__ =="__main__":
-    a=agent("Joshua")
-    a.update_stock("p3", 1)
+# if __name__ =="__main__":
+#     a=agent("Joshua")
+#     a.update_stock("p3", 1)

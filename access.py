@@ -578,6 +578,13 @@ class access:
                         print("STOCK UPDATE ---- UNSUCCESSFUL")
 
 
+            if (inp == 'S'):
+                # Set delivery
+                print("orders")
+                print(self.user)
+                (self.user).view_orders()
+
+
 
 
 
