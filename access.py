@@ -5,10 +5,11 @@ import getpass
 from customer import customer
 from agent import agent
 from collections import defaultdict
+from random import random
 import time
-
-#global AGENT
-#global CUSTOMER
+import os
+# anything to do with random and time are just for fun, if they screw with
+# program, remove all uses of functions
 
 class access:
     '''
@@ -21,6 +22,10 @@ class access:
          self.cursor = self.conn.cursor()
          self.user_typ = -1
          self.user = None
+         self.name = "guest"
+         # Commands
+         self.cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup, "--cart":self.inp_cartDetails, "--admin":self.inp_adminFunctions, "--clear":self.inp_clearScreen}
+
 
 
     def create_account(self):
@@ -32,10 +37,13 @@ class access:
         Returns: (success (boolean), message (str)) (tuple)
         '''
 
+        print("")
+        print("----------------- SIGN UP ---------------------")
+
 
         # Get username AND check viability
         while (True):
-            username = raw_input("Create username: ").lower()
+            username = raw_input("-->Create username: ").lower()
             if len(username) < 4:
                 print "Username must be atleast 4 characters long"
             else:
@@ -50,16 +58,19 @@ class access:
 
         # Get password AND check it
         while (True):
-            password = raw_input("Create password: ")
-            password_rpt = raw_input("Type password again: ")
+            password = raw_input("-->Create password: ")
             if (len(password) < 7):
                 print "password must be 7 characters"
-            elif (password == password_rpt):
-                break
+            else:
+                password_rpt = raw_input("-->Type password again: ")
+                if (password == password_rpt):
+                    break
+                else:
+                    print("Passwords do not match!")
 
         # Get address AND check it
         while (True):
-            address = raw_input("Home Address: ")
+            address = raw_input("-->Home Address: ")
             if (len(address) == 0):
                 print "address not entered"
             else:
@@ -86,17 +97,12 @@ class access:
 
         self.cursor.execute("SELECT * FROM customers WHERE name=:usr;",{"usr": username})
         res=self.cursor.fetchall()
-        #if len(res) > 0:
-        #    print "Username already exists"
-        #    return (False, "account already exists")
 
         # If program gets to here, user information should be okay (already validated)
         self.cursor.execute("SELECT MAX(cast(substr(cid, 2) as int)) FROM customers;")
         res=self.cursor.fetchone()
-        print res
-        #ID = str(int(res[0][1:]) + 1)
+
         ID = str(res[0] + 1)
-        print ID
         ID = ''.join(('c', ID))
         self.cursor.execute("INSERT INTO customers (cid, name, address, pwd) VALUES (?, ?, ?, ?);",
         (ID, username, address, password))
@@ -112,27 +118,17 @@ class access:
         Args: username (str), password (str), customer (varargs, boolean)
         Returns: (success (boolean), message (str)) (tuple)
         '''
-        #while (True):
-            #user_typ = input("Type 1 for customer login or 0 for agent login: ")
-            #username = str(raw_input("Username: ").lower()).rstrip()
-            #password = str(raw_input("Password: "))
+
         if user_typ == 1:
             self.cursor.execute("SELECT * FROM customers WHERE name=? AND pwd=?", (username, password))
-            # try:
-            #     CUSTOMER
-            # except:
-            #     CUSTOMER = customer(username)
+
         elif user_typ == 0:
             self.cursor.execute("SELECT * FROM agents WHERE name=? AND pwd=?", (username, password))
-            # try:
-            #     AGENT
-            # except:
-            #     AGENT = agent(username)
+
 
         if self.cursor.fetchone() != None:
-            print "Logged in!"
             return (True, "Logged in!")
-            #break
+
         else:
             print "username password combo is wrong"
             return (False, "username password combo is wrong")
@@ -157,7 +153,6 @@ class access:
                 else:
                     products[result[0]] += 1
         return sorted(products, key=products.get, reverse=True)
-
 
         def get_products(self, products):
 
@@ -303,7 +298,6 @@ class access:
 
         self.cursor.execute(SQL)
         t2 = self.cursor.fetchall()
-        #print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
         return (t1, t2)
 
     def make_customer(self, username):
@@ -314,47 +308,55 @@ class access:
             u = customer(cid, username, address, password)
 
     def ui_Login(self):
-        # used function login, but formats nicely for ui
-        # --> 3 attempts and checks user_typ is 1 or 0
+
         print("------------------- LOGIN ---------------------")
+        print("<<<OPTIONS>>>")
+        print("")
+        print("> TYPE 1 FOR CUSTOMER LOGIN")
+        print("> TYPE 0 FOR AGENT LOGIN")
         print("")
         while (True):
-            #user_typ = input("Type 1 for customer login or 0 for agent login: ")
-            #print("Type 1 for customer login or 0 for agent login: ")
-            #user_typ = self.get_input("Type 1 for customer login or 0 for agent login: ")
-            user_typ = self.get_input("Type 1 for customer login or 0 for agent login: ")
+
+            user_typ = self.get_input("TYPE OPTION: ")
             if (user_typ in [0,1]):
                 break
         print("")
         for attempt in range(3):
-            # Use Raw input here (dont use get_input function)
             print("Login Attempts Remaining: [{}]".format(2-attempt))
             username = str(raw_input("-->Username: ").lower()).rstrip()
-            #password = str(raw_input("-->Password: "))
             password = getpass.getpass("-->Password: ")
             verified = self.login(user_typ, username, password)[0]
             print("")
             if (verified):
-                #print("")
                 return (True, user_typ, username)
-            #print("")
 
         return False
 
     def inp_help(self):
         print("---------------- HELP MENU --------------------")
         print("")
-        print("commands can be used on any line that does not have an arrow (-->)")
-        universal = ["--help", "--quit", "--login", "--logout", "--signup"]
-        cu_coms = ["--search", "--cart"]
-        ag_coms = ["--admin"]
+        print("commands can be used on any line that does not start with an arrow (-->)")
+        universal = [
+        "--help       >>>> Lists the currently available commands",
+        "--quit       >>>> Logs the user out and quits the program",
+        "--login      >>>> Brings the user to a login screen",
+        "--logout     >>>> Logs the user out",
+        "--signup     >>>> Brings the user to a signup screen",
+        "--clear      >>>> Visually clears the screen"
+        ]
+        cu_coms = [
+        "--search     >>>> Opens Search menu to search for items",
+        "--cart       >>>> Opens Cart menu where customer can adjust cart/checkout"
+        ]
+        ag_coms = [
+        "--admin      >>>> Opens administrator menu"
+        ]
 
         for command in universal:
             print(command)
 
         if self.user_typ == 1:
             print("")
-
 
             for cu_com in cu_coms:
                 print(cu_com)
@@ -370,15 +372,13 @@ class access:
     def inp_quit(self):
 
         if (self.user_typ != -1):
-            self.inp_logout()
             print "logging out..."
+
+            dot = "."
             for i in range(3):
-                print "|/\/\/\/\/\/\/\/|"
-                time.sleep(0.1)
-                print "|\/\/\/\/\/\/\/\|"
-                time.sleep(0.1)
-
-
+                dot = dot + "."
+                print dot
+                time.sleep(0.5)
 
         print("-----------------------------------------------")
         print("Have nice day!")
@@ -391,9 +391,9 @@ class access:
         # if user is customer
 
         if (self.user_typ == 1):
-            #print("-----------------------------------------------")
-            searchInput = self.get_input(">>>>>>>Searchbar: ")
-            #print("-----------------------------------------------")
+            print("")
+            print("----------------- SEARCH VIEW ------------------")
+            searchInput = self.get_input(">>>> SEARCH >>>>: ")
 
             searchInput = searchInput.split()
             r= self.search(searchInput)
@@ -404,6 +404,8 @@ class access:
                 print("No Match Results Found!")
         else:
             print ("Please log in as customer to use search feature.")
+
+        return
 
     def inp_login(self):
         # login
@@ -416,23 +418,26 @@ class access:
             raise SystemExit
         self.user_typ = verified[1]
         if self.user_typ == 1:
-                #CUSTOMER = customer(verified[2])
+            # customer
                 self.user = customer(verified[2])
+                self.name = (self.user).name
         elif self.user_typ == 0:
-                #AGENT = agent(verified[2])
+            # agent
                 self.user = agent(verified[2])
-        return verified
+                self.name = (self.user).name
+        return self.home()
 
     def inp_logout(self):
         if self.user_typ == -1:
             print("NOT LOGGED IN")
         else:
             self.user_typ = -1
+            self.name = "guest"
         # wipe
         # CUSTOMER = None
         # AGENT = None
             self.user = None
-        #return uiTest()
+        return self.home()
 
     def inp_signup(self):
 
@@ -441,6 +446,14 @@ class access:
 
         else:
             self.create_account()
+            print("Redirecting...")
+            dot = "."
+            for i in range(5):
+                dot = dot + "."
+                print dot
+                time.sleep(0.5)
+
+            self.inp_clearScreen()
             return uiTest()
 
     def inp_cartDetails(self):
@@ -448,12 +461,6 @@ class access:
         if (self.user_typ != 1):
             return
         options = ['b', '0', '1', '2', '3', 'p', 'h']
-        # cart_keys = ((self.user).cart).keys()
-        # num_items = len(cart_keys)
-        # print("CART: ")
-        # CUSTOMER.cart
-        # print("CART TOTAL")
-        # CUSTOMER.get_cart_total()
 
         print("------------------ CART VIEW ------------------")
         print("<<<OPTIONS>>>")
@@ -464,7 +471,6 @@ class access:
         print("DEL FROM CART---- TYPE 3 --")
         print("PLACE ORDER------ TYPE p --")
         print("ODER HISTORY----- TYPE h --")
-        #print("")
 
         while True:
             print("")
@@ -483,15 +489,13 @@ class access:
             if (inp == '0'):
                 print("CART: ")
                 self.user.show_cart(detailed = True)
-                #print(((self.user).cart).keys())
             if (inp == '1'):
                 print("CART TOTAL")
                 total = (self.user).get_cart_total()
                 print("${}".format(total))
 
             if (inp == '2'):
-                #inp = raw_input("-->Type : ")
-                # delete_from_cart(self, product_id, store_id, qty, ALL=False)
+
                 keys = self.user.show_cart()
                 k_inp = int(raw_input("-->-->ENTER ITEM NUMBER: "))
                 if (k_inp < len(keys)):
@@ -501,16 +505,13 @@ class access:
                     sid = key[1]
                     qty = int(raw_input("-->-->Type QTY you wish to add (+ or - integer): "))
                     qty = -1 * qty
-                    # pid = raw_input("-->Type PID of item to delete --------: ")
-                    # sid = int(raw_input("-->Type SID of store to delete from --: "))
-                    # qty = int(raw_input("-->Type QTY you wish to delete --: "))
+
                     (self.user).delete_from_cart(pid, sid, qty, ALL=False)
                 else:
                     print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
 
             if (inp == '3'):
-                #inp = raw_input("-->Type : ")
-                # delete_from_cart(self, product_id, store_id, qty, ALL=False)
+
                 print("\nITEMS IN CART")
                 keys = self.user.show_cart()
                 k_inp = int(raw_input("\n-->-->ENTER ITEM NUMBER TO DELETE: "))
@@ -519,18 +520,18 @@ class access:
                     key = key.split("*")
                     pid = key[0]
                     sid = key[1]
-                    # pid = raw_input("-->Type PID of item to delete --------: ")
-                    # sid = int(raw_input("-->Type SID of store to delete from --: "))
-                    # qty = int(raw_input("-->Type QTY you wish to delete --: "))
+
                     (self.user).delete_from_cart(pid, sid, 0, ALL=True)
                 else:
                     print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
-                # pid = raw_input("-->Type PID of item to delete --------: ")
-                # sid = int(raw_input("-->Type SID of store to delete from --: "))
-                # (self.user).delete_from_cart(pid, sid, 0, ALL=True)
 
             if (inp == 'p'):
-                (self.user).confirm_order()
+                try:
+                    (self.user).confirm_order()
+                except sqlite3.OperationalError:
+                    print("ERROR")
+                    return
+
             if (inp == 'h'):
                 history = (self.user).order_history()
                 for order in history:
@@ -539,7 +540,6 @@ class access:
     def inp_adminFunctions(self):
 
         if (self.user_typ != 0):
-            print("here")
             return
 
         options = ['S', 'U', 'A', 'B']
@@ -557,8 +557,6 @@ class access:
 
         while True:
             print("")
-            # cart_keys = ((self.user).cart).keys()
-            # num_items = len(cart_keys)
 
             inp = None
             while inp not in options:
@@ -601,17 +599,12 @@ class access:
             if (inp == 'S'):
                 # Set delivery
                 all_orders, deliv_orders = (self.user).view_orders()
-                #print(orders)
-                #print(deliveries)
+
                 orders = []
                 for o in all_orders:
                     if o not in deliv_orders:
                         orders.append(o[0])
-                # print("orders needing delivery")
-                # for order in orders:
-                #     print(order[0])
 
-                #pickUpTime = raw_input("-->--> PICK UP TIME (press enter for DEFAULT): ").strip() or None
                 count = 0
                 print("")
                 print(">>>>ORDERS NOT IN DELIVERY>>>>")
@@ -688,25 +681,33 @@ class access:
 
                 (self.user).edit_delivery_order_time(trackingNo, oids[index], pickUpTime, dropOffTime)
 
+    def inp_clearScreen(self):
+        # might only work on mac idk
+        os.system('clear')
 
-
-
-
-    def get_input(self, message):
+    def get_input(self, message, CL=False):
         # Function to use when getting input from user
         # checks is input is a command from user, if not, return output as is
         # output will always be string so if we want to return other type, must check and change (eg int)
-        #cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--logout":self.inp_logout}
-        cMap = {"--help":self.inp_help, "--quit":self.inp_quit, "--search":self.inp_search, "--login":self.inp_login, "--logout":self.inp_logout, "--signup":self.inp_signup, "--cart":self.inp_cartDetails, "--admin":self.inp_adminFunctions}
+
         while True:
+            if CL == True:
+                # command line input
+                # if command line input, need to make sure message is updated
+                message = "MiniProject1: {}$  ".format(self.name)
+
             inp = raw_input(message).rstrip().lower()
-            if inp in cMap.keys():
-                cMap[inp]()
+
+            if inp in (self.cMap).keys():
+                (self.cMap)[inp]()
             else:
                 break
+
         if (inp.isdigit()):
             inp = int(inp)
+
         return inp
+
 
     def display_more_details(self, pid):
         t1, t2 = self.more_product_details(pid)
@@ -723,30 +724,35 @@ class access:
 
 
     def display_search_results(self, results):
-        print("--------------- SEARCH RESULTS ----------------")
 
-        # (Not finished yet)
-        # arguments:
-        # --> results: list of pids
-        #
-        # Return:
-        # --> prints out product details in form |PID|NAME|UNIT|NUM_OF_STORES|
+        # anything to do with randint and time are just for fun, if they screw with
+        # program, remove all uses of functions
+        t = len(results) * 0.3
+        r = random()
+        r_t = t * r
+        time.sleep(r_t)
+        r_t = str(round(r_t, 3))
+
+
+        print("")
+        print("")
+        print("--------------- SEARCH RESULTS ----------------")
+        print("{} results in {} seconds".format(len(results), r_t))
+        print("-----------------------------------------------")
+        print("")
+
         count = 0
-        #product_details(product_id)
-        print(results)
+
         for prod in results:
-            #print(prod)
             pd = self.product_details(prod)
-            # t1 layout: for each product (pid, name, unit, cat)
-            # t2 layout: for each store (sid, name, uprice, qty, num_of_orders?)
-            # t2 query doesnt fully work I dont think
-            # doesnt give proper num of orders
-            #t1, t2 = self.more_product_details(prod)
-        #####if len(t2) > 0:             # only display products that are carried by a store
-                                        # maybe check that store qty != 0 too
+
             if ((count % 5) == 0):
                 if (count != 0):
-                    more = get_input("Show more? y/n: ")
+                    while True:
+                        more = raw_input("Show more? y/n: ").lower().rstrip()
+                        if more in ['y', 'n']:
+                            break
+
                     if (more == 'n'):
                         break
                 print ("|PID|NAME|UNIT|NUM_OF_STORES|MIN_PRICE|IN_STOCK|MIN_PRICE_IS|LAST 7 DAYS")
@@ -758,11 +764,8 @@ class access:
                 the minimum price among the stores that have the product in stock,
                 and the number of orders within the past 7 days.
                 '''
-                #print ("|{}|{}|{}|{}|".format(t1[0], t1[1], t1[2], len(t2)))
-                # print(t1)
-                # print(t2)
+
             print("ITEM NUMBER ({}) ---- |{}|{}|{}|{}|{}|{}|{}|{}|".format(count, *pd))
-            #print(pd)
             count += 1
 
         user_inp = self.get_input("\nWould you like to see more details on an item listed? y/n: ")
@@ -770,23 +773,17 @@ class access:
             user_inp = self.get_input("Would you like to see more details on items listed? y/n: ")
 
         if user_inp == 'y':
-        #####pid = self.get_input("Enter PID of item: ")
             item_n = self.get_input("Enter ITEM NUMBER of item: ")
             # Returns: (product detial (list), store info (list))
+            while item_n >= len(results):
+                item_n = self.get_input("INVALID: Enter ITEM NUMBER of item: ")
+
             pid = results[item_n]
             print("")
             print("-----------------------------------------------")
             print("------------------ MORE INFO ------------------")
             t2 = self.display_more_details(pid)
-            #t1, t2 = self.display_more_details(pid)
-            # t1, t2 = self.more_product_details(pid)
-            # print(t1)
-            # print(t2)
 
-            # Add to cart option
-            # if (pd[5] == 0):
-            #     print("Sorry, no store carries this product.")
-            #     return
             user_inp = self.get_input("\nWould you like to add item to cart? y/n: ")
             while user_inp not in ['y', 'n']:
                 user_inp = self.get_input("Would you like to add item to cart? y/n: ")
@@ -797,58 +794,70 @@ class access:
                     print("Sorry, no store has this product in stock.")
                     print("")
                     return
-                # add_to_cart(self, product_id, store_id, qty)
-                # pid = raw_input("-->Enter PID of item: ")
-                # sid = int(raw_input("-->Enter SID of store: "))
 
                 # pid has not changes --> leave
                 # sid --> picked by user
                 s_num = int(raw_input("-->Enter STORE NUMBER of store to order from: "))
+                while s_num >= len(t2):
+                    s_num = int(raw_input("-->INVALID: Enter STORE NUMBER of store to order from: "))
                 sid = t2[s_num][0]
-                #qty = int(raw_input("-->Enter QTY of item: "))
                 qty = 1 # DEFAULT IS 1
-                (self.user).add_to_cart(pid, sid, qty)
+                success = (self.user).add_to_cart(pid, sid, qty)
+                if success:
+                    print("ITEM SUCCESSFULLY ADDED TO CART")
+                else:
+                    print("ERROR: SOMETHING WENT WRONG")
+                    return
+
                 print("")
 
 
 
 
-    def ui_Home(self):
-        print("Welcome to access.py, type --help for list of commands")
-        print("press Enter key")
-        raw_input()
-        usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
-        while (usr_inp not in [0, 1]):
-            usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
-        if (usr_inp == 0):
-            # Create user
-            self.create_account()
-            return uiTest()
-        elif (usr_inp == 1):
-            # login
-            verified = self.ui_Login()
-            if (verified == False):
-                print "Max attempts reached, please try again later!"
-                raise SystemExit
+    # def ui_Home(self):
+    #     print("Welcome to access.py, type --help for list of commands")
+    #     print("press Enter key")
+    #     raw_input()
+    #     usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
+    #     while (usr_inp not in [0, 1]):
+    #         usr_inp = self.get_input("Type 1 to login, 0 to sign up: ")
+    #     if (usr_inp == 0):
+    #         # Create user
+    #         self.create_account()
+    #         return uiTest()
+    #     elif (usr_inp == 1):
+    #         # login
+    #         verified = self.ui_Login()
+    #         if (verified == False):
+    #             print "Max attempts reached, please try again later!"
+    #             raise SystemExit
+    #
+    #         return verified
 
-            return verified
-            #user_typ = verified[1]
-            #username = verified[2]
+    def home(self):
 
+        self.get_input("", CL=True)
 
 def uiTest():
     a = access()
-    # global USERNAME
-    # global AGENT
-    # global CUSTOMER
-    #CUSTOMER = None
+
     print("-----------------------------------------------")
-    print("-Mini Project 1--------------------------V1.0--")
+    print("-Mini Project 1--------------------------V1.2--")
     print("-----------------------------------------------")
     print("")
+    print("")
+    print("-----------------------------------------------")
+    print("| Sign Up as a Customer to search for items,  |")
+    print("| add items to cart, and place orders         |")
+    print("|                                             |")
+    print("| Type --help for help on how to navigate     |")
+    print("-----------------------------------------------")
+    print("")
+    print("")
+
+
     while True:
-        a.get_input("MP1: ")
-        #print(a.user)
+        a.home()
 
 if __name__ == "__main__":
 

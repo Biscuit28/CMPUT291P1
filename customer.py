@@ -16,6 +16,7 @@ class customer:
         SQL = "SELECT * FROM customers cust WHERE cust.name='{}'".format(customer)
         self.cursor.execute(SQL)
         result=self.cursor.fetchone()
+        print "Success! Welcome - {}".format(customer)
         # if result != None:
         #     self.id=result[0]
         #     self.address=result[2]
@@ -167,7 +168,7 @@ class customer:
             print "Failed"
             return (False, 0)
         else:
-            print "success"
+            #print "success"
             SQL = "SELECT MAX(oid) FROM orders;"
             self.cursor.execute(SQL)
             order_id = self.cursor.fetchone()[0]+1
@@ -185,7 +186,7 @@ class customer:
             #reset the cart and commit changes
             self.conn.commit()
             self.cart=dict()
-            print "order successful"
+            print "ORDER SUCCESSFUL"
             return (True, order_id)
 
 
