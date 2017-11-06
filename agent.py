@@ -80,7 +80,23 @@ class agent:
         trackingNo=maxtrack[0]+1
         for oid in orders:
             #oid = oid[0]
-            pickUpTime = raw_input("-->--> PICK UP TIME FOR ORDER {} (press enter for DEFAULT): ".format(oid)).strip() or None
+            #pickUpTime = raw_input("-->--> PICK UP TIME FOR ORDER {} (press enter for DEFAULT): ".format(oid)).strip() or None
+
+            while True:
+                pickUpTime = raw_input("-->--> PICK UP TIME FOR ORDER {} (TYPE 'D' FOR DEFAULT): ".format(oid))
+                if (pickUpTime == 'D'):
+                    pickUpTime = None
+                    break
+                try:
+                    pickUpTime=datetime.strptime(pickUpTime, "%Y-%m-%d %H:%M:%S")
+                except:
+                    print "INVALID DATE FORMAT"
+                    continue
+                else:
+                    break
+
+
+
 
             # self.cursor.execute("INSERT INTO deliveries (trackingNo, oid, pickUpTime, dropOffTime) \
             # VALUES (?, ?, ?, ?);", (trackingNo, oid, pickUpTime, None))

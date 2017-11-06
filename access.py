@@ -8,6 +8,8 @@ from collections import defaultdict
 from random import random
 import time
 import os
+from datetime import datetime
+
 # anything to do with random and time are just for fun, if they screw with
 # program, remove all uses of functions
 
@@ -463,14 +465,14 @@ class access:
         options = ['b', '0', '1', '2', '3', 'p', 'h']
 
         print("------------------ CART VIEW ------------------")
-        print("<<<OPTIONS>>>")
-        print("GO BACK --------- TYPE b --")
-        print("SEE CART--------- TYPE 0 --")
-        print("SEE CART TOTAL--- TYPE 1 --")
-        print("ADJUST QUANTITY-- TYPE 2 --")
-        print("DEL FROM CART---- TYPE 3 --")
-        print("PLACE ORDER------ TYPE p --")
-        print("ODER HISTORY----- TYPE h --")
+        print("<<<<<<<<<<<OPTIONS>>>>>>>>>>>")
+        print(">>GO BACK --------- TYPE b --")
+        print(">>SEE CART--------- TYPE 0 --")
+        print(">>SEE CART TOTAL--- TYPE 1 --")
+        print(">>ADJUST QUANTITY-- TYPE 2 --")
+        print(">>DEL FROM CART---- TYPE 3 --")
+        print(">>PLACE ORDER------ TYPE p --")
+        print(">>ORDER HISTORY---- TYPE h --")
 
         while True:
             print("")
@@ -487,55 +489,159 @@ class access:
                 return
 
             if (inp == '0'):
+                print("")
+                print("<<OPTION 0>>")
                 print("CART: ")
                 self.user.show_cart(detailed = True)
             if (inp == '1'):
+                print("")
+                print("<<OPTION 1>>")
                 print("CART TOTAL")
                 total = (self.user).get_cart_total()
                 print("${}".format(total))
 
             if (inp == '2'):
+                print("")
+                print("<<OPTION 2>>")
 
                 keys = self.user.show_cart()
-                k_inp = int(raw_input("-->-->ENTER ITEM NUMBER: "))
-                if (k_inp < len(keys)):
+                print("")
+                # GET VALID INTEGER
+                while True:
+                    k_inp = raw_input(("-->-->ENTER ITEM NUMBER TO ADJUST, OR TYPE ENTER TO GO BACK: ")) or None
+                    try:
+                        k_inp = int(k_inp)
+                    except TypeError:
+                        break
+                    except (ValueError, AttributeError):
+                        print("INVALID INPUT")
+                        continue
+                    else:
+                        if (0 <= k_inp < len(keys)):
+                            break
+                        else:
+                            print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
+
+
+                #if (k_inp < len(keys)):
+                if k_inp != None:
                     key = keys[k_inp]
                     key = key.split("*")
                     pid = key[0]
                     sid = key[1]
-                    qty = int(raw_input("-->-->Type QTY you wish to add (+ or - integer): "))
+
+                    # GET VALID INTEGER
+                    while True:
+                        qty = raw_input(("-->-->Type QTY you wish to add (+ or - integer): "))
+                        try:
+                            qty = int(qty)
+                        except (ValueError, AttributeError):
+                            print("INVALID INPUT")
+                            continue
+                        else:
+                            break
+
                     qty = -1 * qty
 
                     (self.user).delete_from_cart(pid, sid, qty, ALL=False)
-                else:
-                    print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
+
 
             if (inp == '3'):
+                print("")
+                print("<<OPTION 3>>")
 
-                print("\nITEMS IN CART")
+                print("ITEMS IN CART")
                 keys = self.user.show_cart()
-                k_inp = int(raw_input("\n-->-->ENTER ITEM NUMBER TO DELETE: "))
-                if (k_inp < len(keys)):
+                #k_inp = int(raw_input("\n-->-->ENTER ITEM NUMBER TO DELETE: "))
+                print("")
+                # GET VALID INTEGER
+                while True:
+                    k_inp = raw_input(("-->-->ENTER ITEM NUMBER TO DELETE, OR TYPE ENTER TO GO BACK: ")) or None
+                    try:
+                        k_inp = int(k_inp)
+                    except TypeError:
+                        break
+                    except (ValueError, AttributeError):
+                        print("INVALID INPUT")
+                        continue
+                    else:
+                        if (0 <= k_inp < len(keys)):
+                            break
+                        else:
+                            print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
+
+                if k_inp != None:
+                    #if (k_inp < len(keys)):
                     key = keys[k_inp]
                     key = key.split("*")
                     pid = key[0]
                     sid = key[1]
 
                     (self.user).delete_from_cart(pid, sid, 0, ALL=True)
-                else:
-                    print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
+                #else:
+                    #print("ITEM NUMBER {} DOES NOT EXIST!".format(k_inp))
 
             if (inp == 'p'):
-                try:
-                    (self.user).confirm_order()
-                except sqlite3.OperationalError:
-                    print("ERROR")
-                    return
+                print("")
+                print("<<OPTION p>>")
+                keys = ((self.user).cart).keys()
+                if (len(keys) != 0):
+                    try:
+                        (self.user).confirm_order()
+                    except sqlite3.OperationalError:
+                        print("ERROR")
+                        return
+                else:
+                    print("NO ITEMS IN CART!")
 
             if (inp == 'h'):
+                index = 0
                 history = (self.user).order_history()
+                print("\nORDER HISTORY")
                 for order in history:
-                    print(order)
+                    print("ORDER NUMBER ({}) ---- OID: {}".format(index, order[0]))
+                    index += 1
+
+                print("")
+
+                # GET VALID INTEGER
+                while True:
+                    h_inp = raw_input(("-->-->SELECT ORDER NUMBER, OR TYPE ENTER TO GO BACK: ")) or None
+                    try:
+                        h_inp = int(h_inp)
+                    except TypeError:
+                        break
+                    except (ValueError, AttributeError):
+                        continue
+                    else:
+                        if (h_inp < len(history)):
+                            break
+                        else:
+                            print("INVALID ORDER NUMBER")
+
+
+                if (h_inp != None):
+                    h_inp = int(h_inp)
+
+                    #h_inp = int(h_inp)
+                    d_detail, p_detail = (self.user).order_detail(history[h_inp][0])
+                    print("")
+                    print(">>-----DELIVERY INFO-----")
+                    print(">>")
+                    if (d_detail == None):
+                        print(">>NO DELIVERY INFORMATION AVAILABLE YET, PLEASE CHECK AGAIN LATER")
+                    else:
+                        print(">>|TRACKING #|PICK UP TIME|DROP OFF TIME|DELIVERY ADDRESS|")
+                        print(">>|{}|{}|{}|{}|".format(*d_detail))
+                    print(">>")
+                    print(">>-----PRODUCT INFO------")
+                    print(">>PRODUCT # ---- |SID|STORE NAME|PID|PRODUCT NAME|QUANTITY|UNIT|UNIT PRICE|")
+                    print(">>")
+                    p_count = 0
+                    for product in p_detail:
+                        print(">>PRODUCT {} ---- |{}|{}|{}|{}|{}|{}|{}|".format(p_count, *product))
+                        p_count += 1
+
 
     def inp_adminFunctions(self):
 
@@ -672,12 +778,28 @@ class access:
                     print("INVALID: INDEX OUR OF RANGE!")
                     return
 
+                while True:
+                    pickUpTime = raw_input("-->--> ENTER NEW 'pickUpTime': ")
+                    try:
+                        pickUpTime=datetime.strptime(pickUpTime, "%Y-%m-%d %H:%M:%S")
+                    except:
+                        print "INVALID DATE FORMAT"
+                        continue
+                    else:
+                        break
 
-                pickUpTime = raw_input("-->--> ENTER NEW 'pickUpTime', PRESS ENTER FOR DEFAULT: ")
-                pickUpTime = pickUpTime.strip() or None
+                while True:
+                    dropOffTime = raw_input("-->--> ENTER NEW 'dropOffTime': ")
+                    try:
+                        dropOffTime=datetime.strptime(dropOffTime, "%Y-%m-%d %H:%M:%S")
+                    except:
+                        print "INVALID DATE FORMAT"
+                        continue
+                    else:
+                        break
 
-                dropOffTime = raw_input("-->--> ENTER NEW 'dropOffTime', PRESS ENTER FOR DEFAULT: ")
-                dropOffTime = dropOffTime.strip() or None
+
+
 
                 (self.user).edit_delivery_order_time(trackingNo, oids[index], pickUpTime, dropOffTime)
 
@@ -842,7 +964,7 @@ def uiTest():
     a = access()
 
     print("-----------------------------------------------")
-    print("-Mini Project 1--------------------------V1.2--")
+    print("-Mini Project 1--------------------------V1.3--")
     print("-----------------------------------------------")
     print("")
     print("")
